@@ -1,0 +1,25 @@
+category,name,tier,price,unit,description,icon
+hotel,Homestay Đồi Thông,binh_dan,250000,phòng/đêm,Homestay gỗ ấm cúng gần rừng thông,🏕️
+hotel,Đà Lạt Backpacker Hostel,binh_dan,300000,phòng/đêm,Hostel năng động khu trung tâm hòa mình cùng dân phượt,🎒
+hotel,Khách Sạn Ngọc Lan,tieu_chuan,700000,phòng/đêm,Khách sạn 3 sao view đồi thông gần chợ đêm,🏨
+hotel,Khách Sạn Golden Life,tieu_chuan,850000,phòng/đêm,Khách sạn hiện đại trung tâm thành phố,🏨
+hotel,Ana Mandara Villas Resort,cao_cap,2800000,phòng/đêm,Biệt thự Pháp cổ giữa rừng thông tĩnh lặng,🏰
+hotel,Terracotta Hotel & Resort,cao_cap,2200000,phòng/đêm,Resort sang trọng view toàn cảnh thành phố sương mù,🏰
+restaurant,Quán Cơm Niêu Sương Mai,binh_dan,40000,người/bữa,Cơm niêu bình dân nóng hổi phong cách Đà Lạt,🍚
+restaurant,Bún Bò Ngọc Anh,binh_dan,35000,người/bữa,Bún bò cay nồng ấm bụng ngày se lạnh,🍜
+restaurant,Nhà Hàng Đà Lạt Phố,tieu_chuan,120000,người/bữa,Ẩm thực Việt kết hợp view thành phố về đêm,🍲
+restaurant,Lẩu Bò Ba Toa,tieu_chuan,100000,người/bữa,Lẩu bò đặc sản trứ danh của Đà Lạt,🍢
+restaurant,Trầm Lounge & Restaurant,cao_cap,350000,người/bữa,Fine dining không gian sang trọng lãng mạn,🍷
+restaurant,Chalet De Dalat,cao_cap,400000,người/bữa,Nhà hàng phong cách Pháp giữa đồi thông,🥂
+attraction,Dạo bộ Hồ Xuân Hương,binh_dan,0,người/lượt,Hồ nước biểu tượng giữa lòng thành phố,🚶
+attraction,Chợ Đà Lạt,binh_dan,0,người/lượt,Khu chợ trung tâm sầm uất mua sắm đặc sản,🛍️
+attraction,Ga Đà Lạt,binh_dan,40000,người/lượt,Nhà ga cổ kiến trúc Pháp độc đáo,🚉
+attraction,Thung Lũng Tình Yêu,tieu_chuan,150000,người/lượt,Thung lũng lãng mạn nổi tiếng với hồ và đồi thông,💚
+attraction,Đồi Chè Cầu Đất,tieu_chuan,50000,người/lượt,Đồi chè xanh mướt view sống ảo tuyệt đẹp,🍵
+attraction,Thiền Viện Trúc Lâm,tieu_chuan,20000,người/lượt,Thiền viện thanh tịnh view hồ Tuyền Lâm,🛕
+attraction,Làng Cù Lần,cao_cap,250000,người/lượt,Khu du lịch sinh thái trọn gói trải nghiệm núi rừng,🌲
+attraction,Khu Du Lịch Datanla,cao_cap,300000,người/lượt,Cáp treo và trò chơi mạo hiểm giữa thác nước,🚡
+attraction,Vườn Hoa Thành Phố,cao_cap,100000,người/lượt,Vườn hoa rực rỡ quy mô lớn nhất Đà Lạt,🌷
+souvenir,Chợ Đêm Đà Lạt,binh_dan,100000,người/chuyến,Mứt dâu trà atiso khô bò giá bình dân,🍓
+souvenir,Đà Lạt Farm Đặc Sản,tieu_chuan,200000,người/chuyến,Cửa hàng đặc sản đóng gói đẹp làm quà,🎁
+souvenir,Boutique Quà Tặng Cao Cấp,cao_cap,400000,người/chuyến,Quà tặng thủ công cao cấp đóng hộp sang trọng,💎

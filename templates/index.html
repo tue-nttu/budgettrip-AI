@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BudgetTrip AI – Đà Lạt trong tầm ngân sách của bạn</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <header class="hero">
+    <nav class="navbar">
+      <div class="brand">
+        <img class="brand-logo brand-logo-lg" src="{{ url_for('static', filename='images/logo.png') }}" alt="BudgetTrip AI">
+      </div>
+      <span class="tagline">LẬP KẾ HOẠCH · ĐÀ LẠT</span>
+    </nav>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Thành phố ngàn hoa · Đà Lạt</div>
+      <h1 class="hero-headline">
+        <span class="line-main">Đà Lạt trong tầm tay</span>
+        <span class="divider-dash">–</span>
+        <span class="line-accent">Du lịch trong tầm giá</span>
+      </h1>
+      <p class="hero-subline">Lên kế hoạch thông minh, vi vu mọi ngóc ngách</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <form class="form-card" action="{{ url_for('result') }}" method="POST">
+      <h2>Thông tin chuyến đi của bạn</h2>
+      <p class="hint">Điền thông tin bên dưới, phần còn lại để BudgetTrip AI lo.</p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="people">Số người</label>
+          <input type="number" id="people" name="people" min="1" value="2" required>
+        </div>
+        <div class="field">
+          <label for="days">Số ngày <span class="unit">(kể cả ngày về)</span></label>
+          <input type="number" id="days" name="days" min="1" value="3" required>
+        </div>
+        <div class="field">
+          <label for="budget">Ngân sách dự kiến <span class="unit">(VND, tổng cả nhóm)</span></label>
+          <input type="number" id="budget" name="budget" min="0" step="50000" value="6000000" required>
+        </div>
+        <div class="field">
+          <label for="contingency">Chi phí dự phòng <span class="unit">(VND / người)</span></label>
+          <input type="number" id="contingency" name="contingency" min="0" step="10000" value="100000">
+        </div>
+      </div>
+
+      <div class="transport-field">
+        <label>Phương tiện di chuyển</label>
+        <div class="transport-grid">
+          {% for t in transport_items %}
+          <div class="transport-option">
+            <input type="radio" id="t-{{ t.key }}" name="transport" value="{{ t.key }}" {% if t.key == 'xe_may' %}checked{% endif %}>
+            <label for="t-{{ t.key }}">
+              <span class="t-icon">{{ t.icon }}</span>
+              {{ t.name }}
+              <span class="t-price">{{ t.unit }}</span>
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <button type="submit" class="btn-primary">Lập kế hoạch ngay →</button>
+        <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình</a>
+      </div>
+    </form>
+
+    <section class="features">
+      <div class="feature">
+        <span class="icon">🏨</span>
+        <h3>Khách sạn phù hợp</h3>
+        <p>Gợi ý chỗ ở đúng hạng mức ngân sách</p>
+      </div>
+      <div class="feature">
+        <span class="icon">🍲</span>
+        <h3>Ẩm thực địa phương</h3>
+        <p>Tính sẵn chi phí ăn uống mỗi ngày</p>
+      </div>
+      <div class="feature">
+        <span class="icon">🌲</span>
+        <h3>Tham quan &amp; vui chơi</h3>
+        <p>Lịch trình theo từng ngày rõ ràng</p>
+      </div>
+      <div class="feature">
+        <span class="icon">🎁</span>
+        <h3>Quà lưu niệm</h3>
+        <p>Ước tính chi phí mua sắm mang về</p>
+      </div>
+    </section>
+  </div>
+
+  <footer class="site-footer">BudgetTrip AI</footer>
+</body>
+</html>

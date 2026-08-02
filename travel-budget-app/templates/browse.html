@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tự chọn lịch trình – BudgetTrip AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% from '_macros.html' import render_place_card %}
+
+  <nav class="navbar" style="background: var(--pine-700);">
+    <div class="brand">Budget<span class="dot">Trip</span> AI</div>
+    <a href="{{ url_for('index') }}" style="color:#fff; font-size:0.9rem; text-decoration:none;">← Về trang chủ</a>
+  </nav>
+
+  <div class="container" style="padding-top: 36px; padding-bottom: 60px;">
+    <h1 style="font-size:1.8rem; margin-bottom: 6px;">Tự chọn lịch trình của riêng bạn</h1>
+    <p style="color: var(--ink-soft); margin-bottom: 10px;">
+      Duyệt toàn bộ danh sách khách sạn, quán ăn, quán nước, điểm tham quan và quà lưu niệm ở Đà Lạt — chọn theo đúng gu của bạn, không cần theo gợi ý tự động.
+    </p>
+
+    <div class="browse-tabs">
+      {% for cat, items in places.items() %}
+      <div class="browse-tab {% if loop.first %}active{% endif %}" data-target="panel-{{ cat }}">
+        {{ items[0].icon if items else '' }} {{ category_labels[cat] }}
+        <span class="count">({{ items|length }})</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% for cat, items in places.items() %}
+    <div class="card-grid browse-panel {% if loop.first %}active{% endif %}" id="panel-{{ cat }}">
+      {% for item in items %}
+        {{ render_place_card(item) }}
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <footer class="site-footer">BudgetTrip AI — Đồ án cuối kì · Dữ liệu tổng hợp từ khảo sát thực tế</footer>
+
+  <script>
+    document.querySelectorAll('.browse-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        document.querySelectorAll('.browse-tab').forEach(function (t) { t.classList.remove('active'); });
+        document.querySelectorAll('.browse-panel').forEach(function (p) { p.classList.remove('active'); });
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.target).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
