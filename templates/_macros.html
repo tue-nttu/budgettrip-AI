@@ -21,6 +21,9 @@
       {% if loop.first %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
       <span class="pill-name">{{ p.name }}</span>
       <span class="pill-price">{% if p.price > 0 %}{{ p.price|vnd }}{% else %}Miễn phí{% endif %}</span>
+      {% if p.address %}
+      <a class="pill-map" href="{{ p.address|maps_link }}" target="_blank" rel="noopener">📍 Xem vị trí</a>
+      {% endif %}
     </div>
     {% endfor %}
   </div>
