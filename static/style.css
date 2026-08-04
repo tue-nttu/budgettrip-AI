@@ -137,7 +137,7 @@ a { color: inherit; }
 .hero-headline .line-accent {
   font-style: italic;
   font-weight: 600;
-  color: var(--marigold-500);
+  color: #ffffff;
 }
 .hero-headline .divider-dash {
   color: var(--marigold-500);
@@ -633,3 +633,37 @@ footer.site-footer {
 .browse-tab.active .count { color: rgba(255,255,255,0.75); }
 .browse-panel { display: none; }
 .browse-panel.active { display: grid; }
+
+.pill-map {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 0.74rem;
+  color: var(--pine-700, #2f5d4f);
+  text-decoration: none;
+  font-weight: 600;
+}
+.pill-map:hover { text-decoration: underline; }
+.day-route-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 18px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--pine-700, #2f5d4f);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.day-route-link:hover { opacity: 0.9; }
+.season-note {
+  background: #fdf5e8;
+  border: 1px solid var(--marigold-500);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.season-note b { color: var(--marigold-600); }
