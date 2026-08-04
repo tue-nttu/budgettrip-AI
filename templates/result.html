@@ -18,7 +18,7 @@
 
     <h1 style="font-size:1.8rem; margin-bottom: 6px;">Lịch trình Đà Lạt gợi ý cho bạn</h1>
     <p style="color: var(--ink-soft); margin-bottom: 26px;">
-      {{ people }} người · {{ days }} ngày{% if nights > 0 %} {{ nights }} đêm{% endif %} · {{ plan.transport_item.icon }} {{ plan.transport_item.name }} · Ngân sách {{ budget|vnd }}
+      {{ people }} người · {{ start_date.strftime('%d/%m/%Y') }} → {{ end_date.strftime('%d/%m/%Y') }} ({{ days }} ngày{% if nights > 0 %} {{ nights }} đêm{% endif %}) · {{ plan.transport_item.icon }} {{ plan.transport_item.name }} · Ngân sách {{ budget|vnd }}
     </p>
 
     <div class="summary-bar">
@@ -29,6 +29,12 @@
     </div>
 
     <span class="tier-badge">Hạng mức áp dụng: {{ plan.tier_label }}{% if ai_driven %} · 🤖 do AI đề xuất{% endif %}</span>
+
+    {% if season %}
+    <div class="season-note">
+      🗓️ <b>{{ season.name }}</b> — {{ season.note }}
+    </div>
+    {% endif %}
 
     {% if over_budget %}
     <div class="budget-banner over">
@@ -81,6 +87,9 @@
     {% for stop in plan.itinerary %}
     <div class="day-block">
       <div class="day-label">Ngày {{ stop.day }}</div>
+      {% if stop.maps_url %}
+      <a class="day-route-link" href="{{ stop.maps_url }}" target="_blank" rel="noopener">🗺️ Xem lộ trình ngày {{ stop.day }} trên Google Maps</a>
+      {% endif %}
 
       <div class="time-slot">
         <div class="time-icon">🌅</div>
