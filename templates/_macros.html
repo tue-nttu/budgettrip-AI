@@ -1,42 +1,215 @@
-{% macro render_stars(rating) %}
-  {% if rating %}
-    {% set full = rating | int %}
-    {% set has_half = 1 if (rating - full) > 0.05 else 0 %}
-    {% set empty = 5 - full - has_half %}
-    <span class="stars" aria-label="{{ '%.1f'|format(rating) }} trên 5 sao">
-      {% for i in range(full) %}<span class="star star-full">★</span>{% endfor %}
-      {% if has_half %}<span class="star star-half">★</span>{% endif %}
-      {% for i in range(empty) %}<span class="star star-empty">★</span>{% endfor %}
-      <span class="rating-number">{{ '%.1f'|format(rating) }}</span>
-    </span>
-  {% else %}
-    <span class="rating-none">Chưa có đánh giá</span>
-  {% endif %}
-{% endmacro %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lịch trình Đà Lạt của bạn – BudgetTrip AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% from '_macros.html' import render_stars, render_option_pills %}
 
-{% macro render_option_pills(picks) %}
-  <div class="option-pills">
-    {% for p in picks %}
-    <div class="option-pill {% if loop.first %}primary{% endif %}">
-      {% if loop.first %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
-      <span class="pill-name">{{ p.name }}</span>
-      <span class="pill-price">{% if p.price > 0 %}{{ p.price|vnd }}{% else %}Miễn phí{% endif %}</span>
-      {% if p.address %}
-      <a class="pill-map" href="{{ p.address|maps_link }}" target="_blank" rel="noopener">📍 Xem vị trí</a>
+  <nav class="navbar" style="background: var(--pine-700);">
+    <div class="brand">Budget<span class="dot">Trip</span> AI</div>
+    <a href="{{ url_for('index') }}" style="color:#fff; font-size:0.9rem; text-decoration:none;">← Lập kế hoạch khác</a>
+  </nav>
+
+  <div class="container" style="padding-top: 36px;">
+
+    <h1 style="font-size:1.8rem; margin-bottom: 6px;">Lịch trình Đà Lạt gợi ý cho bạn</h1>
+    <p style="color: var(--ink-soft); margin-bottom: 26px;">
+      {{ people }} người · {{ start_date.strftime('%d/%m/%Y') }} → {{ end_date.strftime('%d/%m/%Y') }} ({{ days }} ngày{% if nights > 0 %} {{ nights }} đêm{% endif %}) · {{ plan.transport_item.icon }} {{ plan.transport_item.name }} · Ngân sách {{ budget|vnd }}
+    </p>
+
+    <div class="summary-bar">
+      <div class="summary-chip"><div class="label">Số người</div><div class="value">{{ people }}</div></div>
+      <div class="summary-chip"><div class="label">Số ngày</div><div class="value">{{ days }}</div></div>
+      <div class="summary-chip"><div class="label">Số phòng cần</div><div class="value">{{ rooms }}</div></div>
+      <div class="summary-chip"><div class="label">Ngân sách</div><div class="value">{{ budget|vnd }}</div></div>
+    </div>
+
+    <span class="tier-badge">Hạng mức áp dụng: {{ plan.tier_label }}{% if ai_driven %} · 🤖 do AI đề xuất{% endif %}</span>
+
+    {% if season %}
+    <div class="season-note">
+      🗓️ <b>{{ season.name }}</b> — {{ season.note }}
+    </div>
+    {% endif %}
+
+    {% if over_budget %}
+    <div class="budget-banner over">
+      <div class="emoji">⚠️</div>
+      <div>
+        <h3>Bạn đã vượt ngân sách {{ (plan.total - budget)|vnd }}</h3>
+        <p>Ngay cả với hạng mức tiết kiệm nhất, tổng chi phí ước tính là {{ plan.total|vnd }}. Cân nhắc giảm số ngày, đổi phương tiện rẻ hơn, hoặc tăng ngân sách để thoải mái hơn.</p>
+      </div>
+    </div>
+    {% else %}
+    <div class="budget-banner ok">
+      <div class="emoji">✅</div>
+      <div>
+        <h3>Trong ngân sách — còn dư {{ remaining|vnd }}</h3>
+        <p>Tổng chi phí ước tính cho chuyến đi là {{ plan.total|vnd }}, phù hợp với hạng mức {{ plan.tier_label|lower }}.</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ================= AI ADVISOR ================= -->
+    <div class="ai-advice-box">
+      <div class="ai-advice-badge">🤖 Lời khuyên từ AI</div>
+      <p>{{ ai_advice }}</p>
+    </div>
+
+    {% if ai_driven and allocation_pct %}
+    <div class="ai-advice-box">
+      <div class="ai-advice-badge">🤖 AI phân bổ ngân sách</div>
+      <div class="alloc-bars">
+        {% for key, label, icon in [
+          ('hotel', 'Khách sạn', '🏨'),
+          ('food', 'Ăn uống', '🍜'),
+          ('drinks', 'Quán nước', '☕'),
+          ('attraction', 'Tham quan', '🌲'),
+          ('souvenir', 'Quà lưu niệm', '🎁')
+        ] %}
+        <div class="alloc-row">
+          <div class="alloc-label">{{ icon }} {{ label }}</div>
+          <div class="alloc-track"><div class="alloc-fill" style="width: {{ allocation_pct[key] }}%;"></div></div>
+          <div class="alloc-pct">{{ allocation_pct[key] }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="ai-driven-note">Tỷ lệ % của phần ngân sách linh hoạt (đã trừ chi phí di chuyển và dự phòng). AI cũng đã chọn ra các địa điểm cụ thể bên dưới phù hợp với ngân sách và hạng mức này.</p>
+    </div>
+    {% endif %}
+
+    <!-- ================= LICH TRINH ================= -->
+    <div class="section-title"><span class="num">1</span> Lịch trình theo ngày</div>
+    {% for stop in plan.itinerary %}
+    <div class="day-block">
+      <div class="day-label">Ngày {{ stop.day }}</div>
+      {% if stop.maps_url %}
+      <a class="day-route-link" href="{{ stop.maps_url }}" target="_blank" rel="noopener">🗺️ Xem lộ trình ngày {{ stop.day }} trên Google Maps</a>
       {% endif %}
+
+      <div class="time-slot">
+        <div class="time-icon">🌅</div>
+        <div class="time-body">
+          <div class="time-title">Buổi sáng</div>
+          {% for block in stop.morning %}
+          <div class="activity-block">
+            <span class="activity-tag">{{ block.label }}</span>
+            {{ render_option_pills(block.picks) }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="time-slot">
+        <div class="time-icon">☀️</div>
+        <div class="time-body">
+          <div class="time-title">Buổi trưa</div>
+          {% for block in stop.midday %}
+          <div class="activity-block">
+            <span class="activity-tag">{{ block.label }}</span>
+            {{ render_option_pills(block.picks) }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="time-slot">
+        <div class="time-icon">🌤️</div>
+        <div class="time-body">
+          <div class="time-title">Buổi chiều</div>
+          {% for block in stop.afternoon %}
+          <div class="activity-block">
+            <span class="activity-tag">{{ block.label }}</span>
+            {{ render_option_pills(block.picks) }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="time-slot">
+        <div class="time-icon">🌙</div>
+        <div class="time-body">
+          <div class="time-title">Buổi tối</div>
+          {% for block in stop.evening %}
+          <div class="activity-block">
+            <span class="activity-tag">{{ block.label }}</span>
+            {{ render_option_pills(block.picks) }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
     </div>
     {% endfor %}
-  </div>
-{% endmacro %}
 
-{% macro render_place_card(item) %}
-  <div class="place-card">
-    <div class="icon-badge">{{ item.icon }}</div>
-    <h4>{{ item.name }}</h4>
-    {{ render_stars(item.rating) }}
-    {% if item.address %}<p class="meta">📍 {{ item.address }}</p>{% endif %}
-    {% if item.hours %}<p class="meta">🕒 {{ item.hours }}</p>{% endif %}
-    <p class="desc">{{ item.description }}</p>
-    <div class="price">{% if item.price > 0 %}{{ item.price|vnd }}{% else %}Miễn phí{% endif %} <span class="unit">/ {{ item.unit }}</span></div>
+    <!-- ================= KHACH SAN ================= -->
+    {% if plan.hotel_picks %}
+    <div class="section-title"><span class="num">2</span> Khách sạn gợi ý</div>
+    <div class="card-grid">
+      {% for h in plan.hotel_picks %}
+      <div class="place-card">
+        {% if loop.first %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
+        <div class="icon-badge">{{ h.icon }}</div>
+        <h4>{{ h.name }}</h4>
+        {{ render_stars(h.rating) }}
+        <p class="meta">📍 {{ h.address }}</p>
+        <p class="desc">{{ h.description }}</p>
+        <div class="price">{{ h.price|vnd }} <span class="unit">/ {{ h.unit }}</span></div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ================= QUA LUU NIEM ================= -->
+    <div class="section-title"><span class="num">3</span> Quà lưu niệm</div>
+    <div class="card-grid">
+      {% for s in plan.souvenir_picks %}
+      <div class="place-card">
+        {% if loop.first %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
+        <div class="icon-badge">{{ s.icon }}</div>
+        <h4>{{ s.name }}</h4>
+        {{ render_stars(s.rating) }}
+        <p class="meta">📍 {{ s.address }}</p>
+        <p class="desc">{{ s.description }}</p>
+        <div class="price">{{ s.price|vnd }} <span class="unit">/ {{ s.unit }}</span></div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ================= PHUONG TIEN ================= -->
+    <div class="section-title"><span class="num">4</span> Phương tiện di chuyển</div>
+    <div class="card-grid">
+      <div class="place-card">
+        <div class="icon-badge">{{ plan.transport_item.icon }}</div>
+        <h4>{{ plan.transport_item.name }}</h4>
+        <p class="desc">{{ plan.transport_item.note }}</p>
+        <div class="price">{{ plan.transport_item.price_per_day|vnd }} <span class="unit">/ đơn vị / ngày · số lượng cần: {{ plan.transport_qty }}</span></div>
+      </div>
+    </div>
+
+    <!-- ================= BANG CHI PHI ================= -->
+    <div class="section-title"><span class="num">5</span> Chi tiết chi phí</div>
+    <table class="cost-table">
+      <tr><th>Hạng mục</th><th style="text-align:right;">Thành tiền</th></tr>
+      {% if plan.hotel_cost > 0 %}<tr><td>Khách sạn ({{ rooms }} phòng × {{ nights }} đêm)</td><td class="amount">{{ plan.hotel_cost|vnd }}</td></tr>{% endif %}
+      <tr><td>Ẩm thực (ăn sáng, trưa, tối × {{ people }} người × {{ days }} ngày)</td><td class="amount">{{ plan.food_cost|vnd }}</td></tr>
+      <tr><td>Quán nước ({{ people }} người × {{ days }} ngày)</td><td class="amount">{{ plan.drinks_cost|vnd }}</td></tr>
+      {% if plan.attraction_cost > 0 %}<tr><td>Tham quan ({{ people }} người × {{ days }} ngày)</td><td class="amount">{{ plan.attraction_cost|vnd }}</td></tr>{% endif %}
+      <tr><td>Quà lưu niệm ({{ people }} người)</td><td class="amount">{{ plan.souvenir_cost|vnd }}</td></tr>
+      <tr><td>Phương tiện di chuyển ({{ plan.transport_item.name }} × {{ days }} ngày)</td><td class="amount">{{ plan.transport_cost|vnd }}</td></tr>
+      {% if plan.contingency_cost > 0 %}<tr><td>Chi phí dự phòng ({{ plan.contingency_per_person|vnd }} × {{ people }} người)</td><td class="amount">{{ plan.contingency_cost|vnd }}</td></tr>{% endif %}
+      <tr class="total"><td>Tổng cộng</td><td class="amount">{{ plan.total|vnd }}</td></tr>
+    </table>
+
+    <div class="footer-actions">
+      <a href="{{ url_for('index') }}" class="btn-secondary">← Thử ngân sách khác</a>
+      <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình khác</a>
+    </div>
   </div>
-{% endmacro %}
+
+  <footer class="site-footer">BudgetTrip AI — Đồ án cuối kì · Dữ liệu tổng hợp từ khảo sát thực tế</footer>
+</body>
+</html>
