@@ -75,7 +75,12 @@ def _fallback_advice(ctx):
     tips = []
     if tier_label:
         tips.append(f"Lịch trình này được xếp ở hạng mức {tier_label}, phù hợp với ngân sách bạn đưa ra.")
-    tips.append("Đà Lạt buổi sáng và tối khá lạnh (15-18°C), nên mang theo áo khoác nhẹ.")
+    season_name = ctx.get("season_name")
+    season_note = ctx.get("season_note")
+    if season_name:
+        tips.append(f"Chuyến đi rơi vào {season_name.lower()}: {season_note}")
+    else:
+        tips.append("Đà Lạt buổi sáng và tối khá lạnh (15-18°C), nên mang theo áo khoác nhẹ.")
     if ctx.get("attraction_names"):
         tips.append("Nên đi tham quan sớm để tránh đông và có ánh sáng đẹp để chụp ảnh.")
     tips.append("Buổi tối ghé khu chợ đêm để ăn vặt, uống nước và mua quà lưu niệm sẽ tiết kiệm hơn nhà hàng.")
@@ -104,13 +109,16 @@ Nhiệm vụ của bạn KHÔNG PHẢI chỉ đưa lời khuyên, mà là THẬT
    - drink_ids: 6-8 id (quán nước/cà phê)
    - attraction_ids: 6-8 id (điểm tham quan)
    - souvenir_ids: 3-4 id (quà lưu niệm)
-4. Viết "advice": 1 đoạn ngắn (3-4 câu, tiếng Việt có dấu, giọng thân thiện) tư vấn thực tế cho chuyến đi
-   (thời tiết nên mặc gì, cách di chuyển hợp lý, mẹo tiết kiệm). Không markdown, không mở đầu kiểu "Dưới đây là...".
+4. Viết "advice": 1 đoạn ngắn (3-4 câu, tiếng Việt có dấu, giọng thân thiện) tư vấn thực tế cho chuyến đi.
+   BẮT BUỘC phải nhắc đến mùa/thời tiết của chuyến đi (dựa vào thông tin mùa bên dưới) và những lưu ý
+   phù hợp với mùa đó (mặc gì, mang theo gì, giá cả mùa này thế nào, có nên đặt trước không...), ngoài ra
+   có thể thêm mẹo di chuyển hoặc mẹo tiết kiệm. Không markdown, không mở đầu kiểu "Dưới đây là...".
 
 CHỈ được chọn id có thật trong danh sách cung cấp bên dưới, không được tự bịa id.
 
 Thông tin chuyến đi:
-- Số ngày: {ctx['days']} | Số người: {ctx['people']}
+- Ngày đi: {ctx.get('start_date', '?')} | Ngày về: {ctx.get('end_date', '?')} | Số ngày: {ctx['days']} | Số người: {ctx['people']}
+- Mùa của chuyến đi: {ctx.get('season_name', '?')} — {ctx.get('season_note', '')}
 - Tổng ngân sách: {ctx['budget']:,} đ
 - Ngân sách linh hoạt (đã trừ chi phí di chuyển + dự phòng cố định): {ctx['flexible_budget']:,} đ cho {ctx['days']} ngày, {ctx['people']} người
 - Phương tiện đã chọn: {ctx['transport_name']}
