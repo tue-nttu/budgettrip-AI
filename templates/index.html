@@ -37,16 +37,20 @@
           <input type="number" id="people" name="people" min="1" value="2" required>
         </div>
         <div class="field">
-          <label for="days">Số ngày <span class="unit">(kể cả ngày về)</span></label>
-          <input type="number" id="days" name="days" min="1" value="3" required>
+          <label for="start_date">Ngày đi</label>
+          <input type="date" id="start_date" name="start_date" required>
+        </div>
+        <div class="field">
+          <label for="end_date">Ngày về</label>
+          <input type="date" id="end_date" name="end_date" required>
         </div>
         <div class="field">
           <label for="budget">Ngân sách dự kiến <span class="unit">(VND, tổng cả nhóm)</span></label>
-          <input type="number" id="budget" name="budget" min="0" step="50000" value="6000000" required>
+          <input type="text" inputmode="numeric" id="budget" name="budget" value="6.000.000" required>
         </div>
         <div class="field">
           <label for="contingency">Chi phí dự phòng <span class="unit">(VND / người)</span></label>
-          <input type="number" id="contingency" name="contingency" min="0" step="10000" value="100000">
+          <input type="text" inputmode="numeric" id="contingency" name="contingency" value="100.000">
         </div>
       </div>
 
@@ -97,5 +101,48 @@
   </div>
 
   <footer class="site-footer">BudgetTrip AI</footer>
+
+  <script>
+    // --- Mac dinh ngay di / ngay ve + rang buoc ngay ve khong truoc ngay di ---
+    (function () {
+      const startInput = document.getElementById('start_date');
+      const endInput = document.getElementById('end_date');
+
+      function toISO(d) {
+        const off = d.getTimezoneOffset();
+        const local = new Date(d.getTime() - off * 60000);
+        return local.toISOString().slice(0, 10);
+      }
+
+      const today = new Date();
+      const defaultEnd = new Date();
+      defaultEnd.setDate(today.getDate() + 2);
+
+      startInput.min = toISO(today);
+      startInput.value = toISO(today);
+      endInput.min = toISO(defaultEnd);
+      endInput.value = toISO(defaultEnd);
+
+      startInput.addEventListener('change', function () {
+        if (!startInput.value) return;
+        endInput.min = startInput.value;
+        if (endInput.value < startInput.value) {
+          endInput.value = startInput.value;
+        }
+      });
+    })();
+
+    // --- Tu dong them dau cham moi 3 so khi nhap ngan sach / du phong ---
+    (function () {
+      function formatMoneyInput(input) {
+        input.addEventListener('input', function () {
+          const digits = input.value.replace(/\D/g, '');
+          input.value = digits ? Number(digits).toLocaleString('vi-VN') : '';
+        });
+      }
+      formatMoneyInput(document.getElementById('budget'));
+      formatMoneyInput(document.getElementById('contingency'));
+    })();
+  </script>
 </body>
 </html>
