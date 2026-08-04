@@ -7,6 +7,8 @@ import math
 import os
 import random
 import re
+from datetime import date, datetime, timedelta
+from urllib.parse import quote
 from flask import Flask, render_template, request
 
 from ai_advisor import generate_ai_plan, fallback_advice
@@ -19,6 +21,12 @@ def format_vnd(value):
     """Dinh dang so tien kieu Viet Nam: 1234567 -> 1.234.567 d"""
     return f"{int(value):,}".replace(",", ".") + " đ"
 
+@app.template_filter("maps_link")
+def maps_link(address):
+    """Tra ve link Google Maps tim kiem theo dia chi (khong can API key)."""
+    if not address:
+        return "#"
+    return "https://www.google.com/maps/search/?api=1&query=" + quote(address)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -77,6 +85,44 @@ def parse_price(text):
     vals = [int(n.replace(".", "")) for n in nums]
     return round(sum(vals) / len(vals))
 
+def parse_money(raw):
+    """'6.000.000' hoac '6000000' -> 6000000 (int). Chuoi rong -> 0."""
+    if raw is None:
+        return 0
+    digits = re.sub(r"[^\d]", "", str(raw))
+    return int(digits) if digits else 0
+
+
+SEASON_INFO = {
+    # Da Lat: mua kho (le hoi hoa, Tet, cao diem) ~ thang 12-3
+    12: {"name": "Mùa khô – cao điểm lễ hội & Tết",
+         "note": "Trời khô ráo, se lạnh về đêm (10-18°C), rất đẹp để chụp ảnh nhưng cũng là mùa cao điểm nên giá phòng, dịch vụ thường tăng — nên đặt phòng trước."},
+    1: {"name": "Mùa khô – cao điểm lễ hội & Tết",
+        "note": "Trời khô ráo, se lạnh về đêm (10-18°C), rất đẹp để chụp ảnh nhưng cũng là mùa cao điểm nên giá phòng, dịch vụ thường tăng — nên đặt phòng trước."},
+    2: {"name": "Mùa khô – cao điểm Tết",
+        "note": "Thời điểm Tết Nguyên đán, giá phòng và dịch vụ có thể tăng mạnh, nơi tham quan rất đông — nên đặt phòng và lên lịch trình sớm."},
+    3: {"name": "Cuối mùa khô",
+        "note": "Vẫn còn nắng ráo, ít mưa, thích hợp cho các hoạt động ngoài trời, giá cả bắt đầu hạ nhiệt so với dịp Tết."},
+    4: {"name": "Giao mùa",
+        "note": "Thời tiết dễ chịu, nắng nhẹ xen ít mưa giông cuối ngày, giá dịch vụ ở mức trung bình."},
+    5: {"name": "Đầu mùa mưa",
+        "note": "Bắt đầu có mưa giông vào buổi chiều, nên mang theo áo mưa/ô, buổi sáng vẫn thường nắng đẹp."},
+    6: {"name": "Mùa mưa",
+        "note": "Mưa nhiều vào chiều tối, nên sắp lịch tham quan ngoài trời vào buổi sáng, mang áo mưa gọn nhẹ."},
+    7: {"name": "Mùa mưa",
+        "note": "Mưa nhiều vào chiều tối, nên sắp lịch tham quan ngoài trời vào buổi sáng, mang áo mưa gọn nhẹ."},
+    8: {"name": "Mùa mưa",
+        "note": "Mưa nhiều vào chiều tối, nên sắp lịch tham quan ngoài trời vào buổi sáng, mang áo mưa gọn nhẹ."},
+    9: {"name": "Mùa mưa",
+        "note": "Mưa nhiều vào chiều tối, nên sắp lịch tham quan ngoài trời vào buổi sáng, mang áo mưa gọn nhẹ."},
+    10: {"name": "Cuối mùa mưa",
+         "note": "Mưa giảm dần, cây cối xanh tươi sau mưa, giá dịch vụ thường mềm hơn mùa cao điểm."},
+    11: {"name": "Giao mùa – bắt đầu se lạnh",
+         "note": "Mưa giảm hẳn, trời bắt đầu se lạnh về đêm, là thời điểm khá lý tưởng và giá còn hợp lý trước khi vào cao điểm."},
+}
+
+def season_info(month):
+    return SEASON_INFO.get(month, {"name": "Không xác định", "note": ""})
 
 def parse_rating(text):
     """'4,3' | '4.1⭐️' | '⭐ 4.6' | '4.9' | '—' -> float hoac None"""
@@ -400,6 +446,37 @@ def normalize_allocation(pct):
         return dict(DEFAULT_ALLOCATION_PCT)
     return {k: round(v / total * 100) for k, v in vals.items()}
 
+def build_day_route_url(day_stop, hotel_address=None):
+    """
+    Ghep dia chi cua khach san + cac diem den chinh (pick dau tien) trong ngay
+    thanh 1 link Google Maps chi duong nhieu chang, giup nguoi dung xem truoc
+    khoang cach / vi tri giua cac diem sang - trua - chieu - toi.
+    """
+    addresses = []
+    if hotel_address:
+        addresses.append(hotel_address)
+    for slot_key in ("morning", "midday", "afternoon", "evening"):
+        for block in day_stop.get(slot_key, []):
+            picks = block.get("picks") or []
+            if picks and picks[0].get("address"):
+                addresses.append(picks[0]["address"])
+
+    # Bo cac dia chi trung lap lien tiep (vd hotel trung voi diem dau)
+    dedup = []
+    for a in addresses:
+        if not dedup or dedup[-1] != a:
+            dedup.append(a)
+
+    if len(dedup) < 2:
+        return None
+
+    origin = quote(dedup[0])
+    destination = quote(dedup[-1])
+    waypoints = "%7C".join(quote(a) for a in dedup[1:-1])
+    url = f"https://www.google.com/maps/dir/?api=1&origin={origin}&destination={destination}&travelmode=driving"
+    if waypoints:
+        url += f"&waypoints={waypoints}"
+    return url
 
 def build_plan(places, transport_items, tier, people, days, nights, rooms, transport_key, contingency_per_person=0):
     hotel_picks = pick_hotels(places["hotel"], tier, 3) if nights > 0 else []
@@ -475,13 +552,16 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
             {"label": "🍢 Ăn vặt / đồ nướng", "picks": evening_snack},
         ]
 
-        itinerary.append({
+        day_stop = {
             "day": d + 1,
             "morning": morning_blocks,
             "midday": midday_blocks,
             "afternoon": afternoon_blocks,
             "evening": evening_blocks,
-        })
+        }
+        hotel_address = hotel_picks[0]["address"] if hotel_picks else None
+        day_stop["maps_url"] = build_day_route_url(day_stop, hotel_address)
+        itinerary.append(day_stop)
 
     transport_cost, transport_item, transport_qty = transport_cost_for(
         transport_items, transport_key, people, days
@@ -529,10 +609,25 @@ def index():
 @app.route("/result", methods=["POST"])
 def result():
     people = max(int(request.form.get("people", 1)), 1)
-    days = max(int(request.form.get("days", 1)), 1)
-    budget = max(int(request.form.get("budget", 0)), 0)
+    budget = max(parse_money(request.form.get("budget", 0)), 0)
     transport_key = request.form.get("transport", "di_bo")
-    contingency_per_person = max(int(request.form.get("contingency", 0) or 0), 0)
+    contingency_per_person = max(parse_money(request.form.get("contingency", 0)), 0)
+
+    # --- Ngay di / ngay ve -> tinh so ngay + xac dinh mua ---
+    today = date.today()
+    try:
+        start_date = datetime.strptime(request.form.get("start_date", ""), "%Y-%m-%d").date()
+    except ValueError:
+        start_date = today
+    try:
+        end_date = datetime.strptime(request.form.get("end_date", ""), "%Y-%m-%d").date()
+    except ValueError:
+        end_date = start_date + timedelta(days=2)
+    if end_date < start_date:
+        start_date, end_date = end_date, start_date
+
+    days = max((end_date - start_date).days + 1, 1)
+    season = season_info(start_date.month)
 
     nights = max(days - 1, 0)
     rooms = math.ceil(people / 2)
@@ -556,6 +651,10 @@ def result():
         "budget": budget,
         "flexible_budget": flexible_budget,
         "transport_name": pre_transport_item["name"],
+        "start_date": start_date.strftime("%d/%m/%Y"),
+        "end_date": end_date.strftime("%d/%m/%Y"),
+        "season_name": season["name"],
+        "season_note": season["note"],
         "pools": {
             "hotel": compact_pool(places["hotel"]),
             "main_food": compact_pool(places["main_food"]),
@@ -589,6 +688,7 @@ def result():
         over_budget = plan["total"] > budget
         ai_advice = ai_result.get("advice") or fallback_advice({
             "tier_label": plan["tier_label"], "attraction_names": plan["attraction_names"],
+            "season_name": season["name"], "season_note": season["note"],
         })
     else:
         # --- AI khong kha dung (chua co key / het quota / loi mang) ---
@@ -613,8 +713,9 @@ def result():
                 places, transport_items, "binh_dan", people, days, nights, rooms,
                 transport_key, contingency_per_person
             )
-        ai_advice = fallback_advice({
+         ai_advice = fallback_advice({
             "tier_label": plan["tier_label"], "attraction_names": plan["attraction_names"],
+            "season_name": season["name"], "season_note": season["note"],
         })
 
     remaining = budget - plan["total"]
@@ -622,10 +723,10 @@ def result():
     return render_template(
         "result.html",
         people=people, days=days, nights=nights, rooms=rooms, budget=budget,
+        start_date=start_date, end_date=end_date, season=season,
         plan=plan, remaining=remaining, over_budget=over_budget, ai_advice=ai_advice,
         ai_driven=ai_driven, allocation_pct=allocation_pct,
     )
-
 
 @app.route("/browse", methods=["GET"])
 def browse():
