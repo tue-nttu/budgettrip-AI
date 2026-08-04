@@ -140,7 +140,7 @@ a { color: inherit; }
   color: #ffffff;
 }
 .hero-headline .divider-dash {
-  color: var(--marigold-500);
+  color: #ffffff;
   font-weight: 400;
   margin: 0 0.28em;
 }
