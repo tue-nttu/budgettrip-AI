@@ -21,12 +21,14 @@ def format_vnd(value):
     """Dinh dang so tien kieu Viet Nam: 1234567 -> 1.234.567 d"""
     return f"{int(value):,}".replace(",", ".") + " đ"
 
+
 @app.template_filter("maps_link")
 def maps_link(address):
     """Tra ve link Google Maps tim kiem theo dia chi (khong can API key)."""
     if not address:
         return "#"
     return "https://www.google.com/maps/search/?api=1&query=" + quote(address)
+
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -85,6 +87,7 @@ def parse_price(text):
     vals = [int(n.replace(".", "")) for n in nums]
     return round(sum(vals) / len(vals))
 
+
 def parse_money(raw):
     """'6.000.000' hoac '6000000' -> 6000000 (int). Chuoi rong -> 0."""
     if raw is None:
@@ -121,8 +124,10 @@ SEASON_INFO = {
          "note": "Mưa giảm hẳn, trời bắt đầu se lạnh về đêm, là thời điểm khá lý tưởng và giá còn hợp lý trước khi vào cao điểm."},
 }
 
+
 def season_info(month):
     return SEASON_INFO.get(month, {"name": "Không xác định", "note": ""})
+
 
 def parse_rating(text):
     """'4,3' | '4.1⭐️' | '⭐ 4.6' | '4.9' | '—' -> float hoac None"""
@@ -446,6 +451,7 @@ def normalize_allocation(pct):
         return dict(DEFAULT_ALLOCATION_PCT)
     return {k: round(v / total * 100) for k, v in vals.items()}
 
+
 def build_day_route_url(day_stop, hotel_address=None):
     """
     Ghep dia chi cua khach san + cac diem den chinh (pick dau tien) trong ngay
@@ -477,6 +483,7 @@ def build_day_route_url(day_stop, hotel_address=None):
     if waypoints:
         url += f"&waypoints={waypoints}"
     return url
+
 
 def build_plan(places, transport_items, tier, people, days, nights, rooms, transport_key, contingency_per_person=0):
     hotel_picks = pick_hotels(places["hotel"], tier, 3) if nights > 0 else []
@@ -713,7 +720,7 @@ def result():
                 places, transport_items, "binh_dan", people, days, nights, rooms,
                 transport_key, contingency_per_person
             )
-         ai_advice = fallback_advice({
+        ai_advice = fallback_advice({
             "tier_label": plan["tier_label"], "attraction_names": plan["attraction_names"],
             "season_name": season["name"], "season_note": season["note"],
         })
@@ -727,6 +734,7 @@ def result():
         plan=plan, remaining=remaining, over_budget=over_budget, ai_advice=ai_advice,
         ai_driven=ai_driven, allocation_pct=allocation_pct,
     )
+
 
 @app.route("/browse", methods=["GET"])
 def browse():
