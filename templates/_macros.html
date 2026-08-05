@@ -14,17 +14,37 @@
   {% endif %}
 {% endmacro %}
 
-{% macro render_option_pills(picks) %}
+{% macro render_option_pills(picks, block_id, category, scale) %}
   <div class="option-pills">
     {% for p in picks %}
-    <div class="option-pill {% if loop.first %}primary{% endif %}">
+    <label class="option-pill {% if loop.first %}primary{% endif %}">
+      <input type="radio" name="{{ block_id }}" value="{{ p.price }}"
+             data-category="{{ category }}" data-scale="{{ scale }}"
+             class="pill-radio" {% if loop.first %}checked{% endif %}>
       {% if loop.first %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
       <span class="pill-name">{{ p.name }}</span>
       <span class="pill-price">{% if p.price > 0 %}{{ p.price|vnd }}{% else %}Miễn phí{% endif %}</span>
-      {% if p.address %}
-      <a class="pill-map" href="{{ p.address|maps_link }}" target="_blank" rel="noopener">📍 Xem vị trí</a>
-      {% endif %}
-    </div>
+      {% if p.address %}<span class="pill-address">📍 {{ p.address }}</span>{% endif %}
+    </label>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro render_selectable_cards(items, block_id, category, scale) %}
+  <div class="card-grid">
+    {% for it in items %}
+    <label class="place-card selectable-card">
+      <input type="radio" name="{{ block_id }}" value="{{ it.price }}"
+             data-category="{{ category }}" data-scale="{{ scale }}"
+             class="pill-radio" {% if loop.first %}checked{% endif %}>
+      {% if loop.first %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
+      <div class="icon-badge">{{ it.icon }}</div>
+      <h4>{{ it.name }}</h4>
+      {{ render_stars(it.rating) }}
+      <p class="meta">📍 {{ it.address }}</p>
+      <p class="desc">{{ it.description }}</p>
+      <div class="price">{{ it.price|vnd }} <span class="unit">/ {{ it.unit }}</span></div>
+    </label>
     {% endfor %}
   </div>
 {% endmacro %}
