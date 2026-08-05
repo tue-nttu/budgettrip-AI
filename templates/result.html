@@ -39,6 +39,9 @@
     <p style="font-size:0.85rem; color: var(--ink-soft); margin: 4px 0 18px;">
       💡 Mỗi mục có 3 gợi ý — bấm chọn 1 lựa chọn bạn thích, tổng chi phí bên dưới sẽ tự cập nhật theo đúng lựa chọn của bạn.
     </p>
+    <p style="font-size:0.8rem; color: var(--ink-soft); margin: -8px 0 18px; font-style: italic;">
+      ⚠️ Giá cả trong lịch trình chỉ mang tính chất tham khảo tại thời điểm khảo sát, có thể thay đổi theo thời gian, mùa vụ hoặc chính sách của từng nơi. Bạn nên kiểm tra lại giá trước khi đặt chỗ hoặc sử dụng dịch vụ.
+    </p>
 
     <div class="budget-banner ok" id="budget-banner-box">
       <div class="emoji" id="budget-banner-emoji">✅</div>
@@ -162,6 +165,7 @@
 
     <!-- ================= BANG CHI PHI ================= -->
     <div class="section-title"><span class="num">5</span> Chi tiết chi phí <span style="font-size:0.7rem; font-weight:500; color: var(--ink-soft);">(tự cập nhật theo lựa chọn)</span></div>
+    <p style="font-size:0.78rem; color: var(--ink-soft); margin: -4px 0 10px; font-style: italic;">*Số liệu ước tính, giá thực tế có thể thay đổi.</p>
     <table class="cost-table">
       <tr><th>Hạng mục</th><th style="text-align:right;">Thành tiền</th></tr>
       {% if plan.hotel_picks %}<tr><td>Khách sạn ({{ rooms }} phòng × {{ nights }} đêm)</td><td class="amount" id="amt-hotel">{{ plan.hotel_cost|vnd }}</td></tr>{% endif %}
