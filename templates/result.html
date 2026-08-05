@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-{% from '_macros.html' import render_stars, render_option_pills %}
+{% from '_macros.html' import render_stars, render_option_pills, render_selectable_cards %}
 
   <nav class="navbar" style="background: var(--pine-700);">
     <div class="brand">Budget<span class="dot">Trip</span> AI</div>
@@ -36,23 +36,17 @@
     </div>
     {% endif %}
 
-    {% if over_budget %}
-    <div class="budget-banner over">
-      <div class="emoji">⚠️</div>
+    <p style="font-size:0.85rem; color: var(--ink-soft); margin: 4px 0 18px;">
+      💡 Mỗi mục có 3 gợi ý — bấm chọn 1 lựa chọn bạn thích, tổng chi phí bên dưới sẽ tự cập nhật theo đúng lựa chọn của bạn.
+    </p>
+
+    <div class="budget-banner ok" id="budget-banner-box">
+      <div class="emoji" id="budget-banner-emoji">✅</div>
       <div>
-        <h3>Bạn đã vượt ngân sách {{ (plan.total - budget)|vnd }}</h3>
-        <p>Ngay cả với hạng mức tiết kiệm nhất, tổng chi phí ước tính là {{ plan.total|vnd }}. Cân nhắc giảm số ngày, đổi phương tiện rẻ hơn, hoặc tăng ngân sách để thoải mái hơn.</p>
+        <h3 id="budget-banner-title">Đang tính toán...</h3>
+        <p id="budget-banner-desc"></p>
       </div>
     </div>
-    {% else %}
-    <div class="budget-banner ok">
-      <div class="emoji">✅</div>
-      <div>
-        <h3>Trong ngân sách — còn dư {{ remaining|vnd }}</h3>
-        <p>Tổng chi phí ước tính cho chuyến đi là {{ plan.total|vnd }}, phù hợp với hạng mức {{ plan.tier_label|lower }}.</p>
-      </div>
-    </div>
-    {% endif %}
 
     <!-- ================= AI ADVISOR ================= -->
     <div class="ai-advice-box">
@@ -98,7 +92,7 @@
           {% for block in stop.morning %}
           <div class="activity-block">
             <span class="activity-tag">{{ block.label }}</span>
-            {{ render_option_pills(block.picks) }}
+            {{ render_option_pills(block.picks, 'd' ~ stop.day ~ '-morning-' ~ loop.index, block.category, people) }}
           </div>
           {% endfor %}
         </div>
@@ -111,7 +105,7 @@
           {% for block in stop.midday %}
           <div class="activity-block">
             <span class="activity-tag">{{ block.label }}</span>
-            {{ render_option_pills(block.picks) }}
+            {{ render_option_pills(block.picks, 'd' ~ stop.day ~ '-midday-' ~ loop.index, block.category, people) }}
           </div>
           {% endfor %}
         </div>
@@ -124,7 +118,7 @@
           {% for block in stop.afternoon %}
           <div class="activity-block">
             <span class="activity-tag">{{ block.label }}</span>
-            {{ render_option_pills(block.picks) }}
+            {{ render_option_pills(block.picks, 'd' ~ stop.day ~ '-afternoon-' ~ loop.index, block.category, people) }}
           </div>
           {% endfor %}
         </div>
@@ -137,7 +131,7 @@
           {% for block in stop.evening %}
           <div class="activity-block">
             <span class="activity-tag">{{ block.label }}</span>
-            {{ render_option_pills(block.picks) }}
+            {{ render_option_pills(block.picks, 'd' ~ stop.day ~ '-evening-' ~ loop.index, block.category, people) }}
           </div>
           {% endfor %}
         </div>
@@ -148,36 +142,12 @@
     <!-- ================= KHACH SAN ================= -->
     {% if plan.hotel_picks %}
     <div class="section-title"><span class="num">2</span> Khách sạn gợi ý</div>
-    <div class="card-grid">
-      {% for h in plan.hotel_picks %}
-      <div class="place-card">
-        {% if loop.first %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
-        <div class="icon-badge">{{ h.icon }}</div>
-        <h4>{{ h.name }}</h4>
-        {{ render_stars(h.rating) }}
-        <p class="meta">📍 {{ h.address }}</p>
-        <p class="desc">{{ h.description }}</p>
-        <div class="price">{{ h.price|vnd }} <span class="unit">/ {{ h.unit }}</span></div>
-      </div>
-      {% endfor %}
-    </div>
+    {{ render_selectable_cards(plan.hotel_picks, 'hotel-pick', 'hotel', rooms * nights) }}
     {% endif %}
 
     <!-- ================= QUA LUU NIEM ================= -->
     <div class="section-title"><span class="num">3</span> Quà lưu niệm</div>
-    <div class="card-grid">
-      {% for s in plan.souvenir_picks %}
-      <div class="place-card">
-        {% if loop.first %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
-        <div class="icon-badge">{{ s.icon }}</div>
-        <h4>{{ s.name }}</h4>
-        {{ render_stars(s.rating) }}
-        <p class="meta">📍 {{ s.address }}</p>
-        <p class="desc">{{ s.description }}</p>
-        <div class="price">{{ s.price|vnd }} <span class="unit">/ {{ s.unit }}</span></div>
-      </div>
-      {% endfor %}
-    </div>
+    {{ render_selectable_cards(plan.souvenir_picks, 'souvenir-pick', 'souvenir', people) }}
 
     <!-- ================= PHUONG TIEN ================= -->
     <div class="section-title"><span class="num">4</span> Phương tiện di chuyển</div>
@@ -191,17 +161,17 @@
     </div>
 
     <!-- ================= BANG CHI PHI ================= -->
-    <div class="section-title"><span class="num">5</span> Chi tiết chi phí</div>
+    <div class="section-title"><span class="num">5</span> Chi tiết chi phí <span style="font-size:0.7rem; font-weight:500; color: var(--ink-soft);">(tự cập nhật theo lựa chọn)</span></div>
     <table class="cost-table">
       <tr><th>Hạng mục</th><th style="text-align:right;">Thành tiền</th></tr>
-      {% if plan.hotel_cost > 0 %}<tr><td>Khách sạn ({{ rooms }} phòng × {{ nights }} đêm)</td><td class="amount">{{ plan.hotel_cost|vnd }}</td></tr>{% endif %}
-      <tr><td>Ẩm thực (ăn sáng, trưa, tối × {{ people }} người × {{ days }} ngày)</td><td class="amount">{{ plan.food_cost|vnd }}</td></tr>
-      <tr><td>Quán nước ({{ people }} người × {{ days }} ngày)</td><td class="amount">{{ plan.drinks_cost|vnd }}</td></tr>
-      {% if plan.attraction_cost > 0 %}<tr><td>Tham quan ({{ people }} người × {{ days }} ngày)</td><td class="amount">{{ plan.attraction_cost|vnd }}</td></tr>{% endif %}
-      <tr><td>Quà lưu niệm ({{ people }} người)</td><td class="amount">{{ plan.souvenir_cost|vnd }}</td></tr>
+      {% if plan.hotel_picks %}<tr><td>Khách sạn ({{ rooms }} phòng × {{ nights }} đêm)</td><td class="amount" id="amt-hotel">{{ plan.hotel_cost|vnd }}</td></tr>{% endif %}
+      <tr><td>Ẩm thực (ăn sáng, trưa, tối × {{ people }} người × {{ days }} ngày)</td><td class="amount" id="amt-food">{{ plan.food_cost|vnd }}</td></tr>
+      <tr><td>Quán nước ({{ people }} người × {{ days }} ngày)</td><td class="amount" id="amt-drinks">{{ plan.drinks_cost|vnd }}</td></tr>
+      <tr><td>Tham quan ({{ people }} người × {{ days }} ngày)</td><td class="amount" id="amt-attraction">{{ plan.attraction_cost|vnd }}</td></tr>
+      <tr><td>Quà lưu niệm ({{ people }} người)</td><td class="amount" id="amt-souvenir">{{ plan.souvenir_cost|vnd }}</td></tr>
       <tr><td>Phương tiện di chuyển ({{ plan.transport_item.name }} × {{ days }} ngày)</td><td class="amount">{{ plan.transport_cost|vnd }}</td></tr>
       {% if plan.contingency_cost > 0 %}<tr><td>Chi phí dự phòng ({{ plan.contingency_per_person|vnd }} × {{ people }} người)</td><td class="amount">{{ plan.contingency_cost|vnd }}</td></tr>{% endif %}
-      <tr class="total"><td>Tổng cộng</td><td class="amount">{{ plan.total|vnd }}</td></tr>
+      <tr class="total"><td>Tổng cộng</td><td class="amount" id="amt-total">{{ plan.total|vnd }}</td></tr>
     </table>
 
     <div class="footer-actions">
@@ -210,6 +180,63 @@
     </div>
   </div>
 
-  <footer class="site-footer">BudgetTrip AI — Đồ án cuối kì · Dữ liệu tổng hợp từ khảo sát thực tế</footer>
+  <footer class="site-footer">BudgetTrip AI</footer>
+
+  <script>
+    (function () {
+      var FIXED_COST = {{ plan.transport_cost + plan.contingency_cost }};
+      var BUDGET = {{ budget }};
+
+      function fmtVND(n) {
+        return Math.round(n).toLocaleString('vi-VN').replace(/,/g, '.') + ' đ';
+      }
+
+      function recalc() {
+        var sums = { hotel: 0, food: 0, drinks: 0, attraction: 0, souvenir: 0 };
+        document.querySelectorAll('.pill-radio:checked').forEach(function (r) {
+          var cat = r.dataset.category;
+          var scale = parseFloat(r.dataset.scale) || 0;
+          var price = parseFloat(r.value) || 0;
+          if (sums.hasOwnProperty(cat)) {
+            sums[cat] += price * scale;
+          }
+        });
+
+        Object.keys(sums).forEach(function (cat) {
+          var el = document.getElementById('amt-' + cat);
+          if (el) el.textContent = fmtVND(sums[cat]);
+        });
+
+        var variableTotal = sums.hotel + sums.food + sums.drinks + sums.attraction + sums.souvenir;
+        var grandTotal = variableTotal + FIXED_COST;
+
+        var totalEl = document.getElementById('amt-total');
+        if (totalEl) totalEl.textContent = fmtVND(grandTotal);
+
+        var remaining = BUDGET - grandTotal;
+        var box = document.getElementById('budget-banner-box');
+        var emoji = document.getElementById('budget-banner-emoji');
+        var title = document.getElementById('budget-banner-title');
+        var desc = document.getElementById('budget-banner-desc');
+
+        if (remaining < 0) {
+          box.className = 'budget-banner over';
+          emoji.textContent = '⚠️';
+          title.textContent = 'Bạn đã vượt ngân sách ' + fmtVND(-remaining);
+          desc.textContent = 'Tổng chi phí theo lựa chọn hiện tại là ' + fmtVND(grandTotal) + '. Thử đổi sang lựa chọn giá thấp hơn ở vài mục, hoặc tăng ngân sách để thoải mái hơn.';
+        } else {
+          box.className = 'budget-banner ok';
+          emoji.textContent = '✅';
+          title.textContent = 'Trong ngân sách — còn dư ' + fmtVND(remaining);
+          desc.textContent = 'Tổng chi phí theo lựa chọn hiện tại là ' + fmtVND(grandTotal) + '.';
+        }
+      }
+
+      document.querySelectorAll('.pill-radio').forEach(function (r) {
+        r.addEventListener('change', recalc);
+      });
+      recalc();
+    })();
+  </script>
 </body>
 </html>
