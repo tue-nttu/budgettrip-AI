@@ -543,22 +543,21 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
 
         # Cau truc linh hoat: moi khung gio la 1 danh sach cac "khoi hoat dong"
         # (khong con co dinh sang=tham quan / trua=quan nuoc / toi=tham quan nua)
-        morning_blocks = [{"label": "🍜 Ăn sáng", "picks": breakfast}]
+        morning_blocks = [{"label": "🍜 Ăn sáng", "picks": breakfast, "category": "food"}]
         if morning_attraction:
-            morning_blocks.append({"label": "🌲 Tham quan", "picks": morning_attraction})
+            morning_blocks.append({"label": "🌲 Tham quan", "picks": morning_attraction, "category": "attraction"})
 
-        midday_blocks = [{"label": "🍜 Ăn trưa", "picks": lunch}]
+        midday_blocks = [{"label": "🍜 Ăn trưa", "picks": lunch, "category": "food"}]
         if midday_attraction:
-            midday_blocks.append({"label": "🌲 Tham quan", "picks": midday_attraction})
+            midday_blocks.append({"label": "🌲 Tham quan", "picks": midday_attraction, "category": "attraction"})
 
-        afternoon_blocks = [{"label": "☕ Cà phê chiều", "picks": afternoon_drinks}]
+        afternoon_blocks = [{"label": "☕ Cà phê chiều", "picks": afternoon_drinks, "category": "drinks"}]
 
         evening_blocks = [
-            {"label": "🍜 Ăn tối", "picks": dinner},
-            {"label": "☕ Quán nước tối", "picks": evening_drinks},
-            {"label": "🍢 Ăn vặt / đồ nướng", "picks": evening_snack},
+            {"label": "🍜 Ăn tối", "picks": dinner, "category": "food"},
+            {"label": "☕ Quán nước tối", "picks": evening_drinks, "category": "drinks"},
+            {"label": "🍢 Ăn vặt / đồ nướng", "picks": evening_snack, "category": "food"},
         ]
-
         day_stop = {
             "day": d + 1,
             "morning": morning_blocks,
