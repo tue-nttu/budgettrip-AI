@@ -634,15 +634,35 @@ footer.site-footer {
 .browse-panel { display: none; }
 .browse-panel.active { display: grid; }
 
-.pill-map {
-  display: inline-block;
+.pill-address {
+  display: block;
   margin-top: 6px;
   font-size: 0.74rem;
-  color: var(--pine-700, #2f5d4f);
-  text-decoration: none;
-  font-weight: 600;
+  color: var(--ink-soft);
 }
-.pill-map:hover { text-decoration: underline; }
+
+/* --- Lua chon 1-trong-3 dang radio --- */
+.option-pill, .selectable-card.selectable-card {
+  cursor: pointer;
+  position: relative;
+  display: block;
+}
+.option-pill input.pill-radio,
+.selectable-card input.pill-radio {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.option-pill:has(input.pill-radio:checked) {
+  border-color: var(--marigold-500);
+  background: #fdf5e8;
+  box-shadow: 0 0 0 2px var(--marigold-500) inset;
+}
+.selectable-card:has(input.pill-radio:checked) {
+  border-color: var(--marigold-500);
+  box-shadow: 0 0 0 2px var(--marigold-500) inset;
+}
 .day-route-link {
   display: inline-flex;
   align-items: center;
