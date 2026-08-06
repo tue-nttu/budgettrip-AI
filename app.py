@@ -66,6 +66,61 @@ def is_main_dish(name):
     return not any(kw in n for kw in SNACK_KEYWORDS)
 
 
+def dish_type(name):
+    """Xac dinh 'loai mon' cua 1 mon an vat (vd: banh trang nuong, kem, tra...)."""
+    n = name.lower()
+    for kw in SNACK_KEYWORDS:
+        if kw in n:
+            return kw
+    return "khac"
+
+
+def pick_snack(pool, tier, k=3, used_names=None, used_types=None):
+    """
+    Chon do an vat DA DANG LOAI MON: uu tien loai mon (vd banh trang nuong,
+    kem, tra...) CHUA xuat hien trong chuyen di truoc, tranh tinh trang
+    nhieu buoi lien tiep deu la cung 1 loai mon (chi khac ten quan).
+    """
+    used_names = used_names or set()
+    used_types = used_types or set()
+    filtered = [p for p in pool if p.get("tier") == tier]
+    source = filtered if len(filtered) >= k else pool
+    if not source:
+        return []
+
+    for p in source:
+        p["_dish_type"] = dish_type(p["name"])
+
+    shuffled = list(source)
+    random.shuffle(shuffled)
+
+    def rank(p):
+        return (p["_dish_type"] in used_types, p["name"] in used_names)
+
+    candidates = sorted(shuffled, key=rank)
+
+    picks = []
+    picked_types = set()
+    for p in candidates:
+        if len(picks) >= k:
+            break
+        if p["_dish_type"] in picked_types:
+            continue
+        picks.append(p)
+        picked_types.add(p["_dish_type"])
+
+    if len(picks) < k:
+        picked_names = {p["name"] for p in picks}
+        remaining = [p for p in candidates if p["name"] not in picked_names]
+        for p in remaining:
+            if len(picks) >= k:
+                break
+            picks.append(p)
+
+    picks.sort(key=lambda x: (x.get("rating") or 0), reverse=True)
+    return picks
+
+
 NUM_RE = re.compile(r"\d{1,3}(?:\.\d{3})+|\d+")
 TAXI_KM_PER_DAY = 25  # uoc tinh so km di chuyen trung binh moi ngay cho khach du lich
 
@@ -495,6 +550,7 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
 
     # "Bo nho" xuyen suot chuyen di de han che lap lai dia diem giua cac ngay
     used_food, used_drinks, used_attraction, used_snack = set(), set(), set(), set()
+    used_snack_types = set()
 
     itinerary = []
     all_attraction_names = []
@@ -528,8 +584,9 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
         used_drinks.update(p["name"] for p in afternoon_drinks)
         evening_drinks = pick_random(places["drinks"], tier, 3, used_drinks)
         used_drinks.update(p["name"] for p in evening_drinks)
-        evening_snack = pick_random(places["snack"], tier, 3, used_snack)
+        evening_snack = pick_snack(places["snack"], tier, 3, used_snack, used_snack_types)
         used_snack.update(p["name"] for p in evening_snack)
+        used_snack_types.update(p["_dish_type"] for p in evening_snack)
 
         day_food = avg_price(breakfast) + avg_price(lunch) + avg_price(dinner) + avg_price(evening_snack)
         day_drinks = avg_price(afternoon_drinks) + avg_price(evening_drinks)
