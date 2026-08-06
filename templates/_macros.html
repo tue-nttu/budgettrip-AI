@@ -49,6 +49,23 @@
   </div>
 {% endmacro %}
 
+{% macro render_transport_cards(options, block_id) %}
+  <div class="card-grid">
+    {% for t in options %}
+    <label class="place-card selectable-card">
+      <input type="radio" name="{{ block_id }}" value="{{ t.total_cost }}"
+             data-category="transport" data-scale="1"
+             class="pill-radio" {% if t.is_default %}checked{% endif %}>
+      {% if t.is_default %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
+      <div class="icon-badge">{{ t.icon }}</div>
+      <h4>{{ t.name }}</h4>
+      <p class="desc">{{ t.note }}</p>
+      <div class="price">{{ t.total_cost|vnd }} <span class="unit">cho cả chuyến{% if t.qty > 1 %} · {{ t.qty }} xe{% endif %}</span></div>
+    </label>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
 {% macro render_place_card(item) %}
   <div class="place-card">
     <div class="icon-badge">{{ item.icon }}</div>
