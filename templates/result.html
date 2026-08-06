@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-{% from '_macros.html' import render_stars, render_option_pills, render_selectable_cards %}
+{% from '_macros.html' import render_stars, render_option_pills, render_selectable_cards, render_transport_cards %}
 
   <nav class="navbar" style="background: var(--pine-700);">
     <div class="brand">Budget<span class="dot">Trip</span> AI</div>
@@ -18,7 +18,7 @@
 
     <h1 style="font-size:1.8rem; margin-bottom: 6px;">Lịch trình Đà Lạt gợi ý cho bạn</h1>
     <p style="color: var(--ink-soft); margin-bottom: 26px;">
-      {{ people }} người · {{ start_date.strftime('%d/%m/%Y') }} → {{ end_date.strftime('%d/%m/%Y') }} ({{ days }} ngày{% if nights > 0 %} {{ nights }} đêm{% endif %}) · {{ plan.transport_item.icon }} {{ plan.transport_item.name }} · Ngân sách {{ budget|vnd }}
+      {{ people }} người · {{ start_date.strftime('%d/%m/%Y') }} → {{ end_date.strftime('%d/%m/%Y') }} ({{ days }} ngày{% if nights > 0 %} {{ nights }} đêm{% endif %}) · Ngân sách {{ budget|vnd }}
     </p>
 
     <div class="summary-bar">
@@ -28,13 +28,24 @@
       <div class="summary-chip"><div class="label">Ngân sách</div><div class="value">{{ budget|vnd }}</div></div>
     </div>
 
-    <span class="tier-badge">Hạng mức áp dụng: {{ plan.tier_label }}{% if ai_driven %} · 🤖 do AI đề xuất{% endif %}</span>
-
-    {% if season %}
-    <div class="season-note">
-      🗓️ <b>{{ season.name }}</b> — {{ season.note }}
+    <div class="trip-info-card">
+      <div class="trip-info-row">
+        <span class="trip-info-icon">🏷️</span>
+        <div>
+          <div class="trip-info-label">Hạng mức áp dụng</div>
+          <div class="trip-info-value">{{ plan.tier_label }}{% if ai_driven %} <span class="ai-tag">🤖 AI đề xuất</span>{% endif %}</div>
+        </div>
+      </div>
+      {% if season %}
+      <div class="trip-info-row">
+        <span class="trip-info-icon">🗓️</span>
+        <div>
+          <div class="trip-info-label">{{ season.name }}</div>
+          <div class="trip-info-note">{{ season.note }}</div>
+        </div>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
 
     <p style="font-size:0.85rem; color: var(--ink-soft); margin: 4px 0 18px;">
       💡 Mỗi mục có 3 gợi ý — bấm chọn 1 lựa chọn bạn thích, tổng chi phí bên dưới sẽ tự cập nhật theo đúng lựa chọn của bạn.
@@ -151,14 +162,7 @@
 
     <!-- ================= PHUONG TIEN ================= -->
     <div class="section-title"><span class="num">4</span> Phương tiện di chuyển</div>
-    <div class="card-grid">
-      <div class="place-card">
-        <div class="icon-badge">{{ plan.transport_item.icon }}</div>
-        <h4>{{ plan.transport_item.name }}</h4>
-        <p class="desc">{{ plan.transport_item.note }}</p>
-        <div class="price">{{ plan.transport_item.price_per_day|vnd }} <span class="unit">/ đơn vị / ngày · số lượng cần: {{ plan.transport_qty }}</span></div>
-      </div>
-    </div>
+    {{ render_transport_cards(transport_options, 'transport-pick') }}
 
     <!-- ================= BANG CHI PHI ================= -->
     <div class="section-title"><span class="num">5</span> Chi tiết chi phí <span style="font-size:0.7rem; font-weight:500; color: var(--ink-soft);">(tự cập nhật theo lựa chọn)</span></div>
@@ -170,7 +174,7 @@
       <tr><td>Quán nước ({{ people }} người × {{ days }} ngày)</td><td class="amount" id="amt-drinks">{{ plan.drinks_cost|vnd }}</td></tr>
       <tr><td>Tham quan ({{ people }} người × {{ days }} ngày)</td><td class="amount" id="amt-attraction">{{ plan.attraction_cost|vnd }}</td></tr>
       <tr><td>Quà lưu niệm ({{ people }} người)</td><td class="amount" id="amt-souvenir">{{ plan.souvenir_cost|vnd }}</td></tr>
-      <tr><td>Phương tiện di chuyển ({{ plan.transport_item.name }} × {{ days }} ngày)</td><td class="amount">{{ plan.transport_cost|vnd }}</td></tr>
+      <tr><td>Phương tiện di chuyển ({{ days }} ngày)</td><td class="amount" id="amt-transport">{{ plan.transport_cost|vnd }}</td></tr>
       {% if plan.contingency_cost > 0 %}<tr><td>Chi phí dự phòng ({{ plan.contingency_per_person|vnd }} × {{ people }} người)</td><td class="amount">{{ plan.contingency_cost|vnd }}</td></tr>{% endif %}
       <tr class="total"><td>Tổng cộng</td><td class="amount" id="amt-total">{{ plan.total|vnd }}</td></tr>
     </table>
@@ -185,7 +189,7 @@
 
   <script>
     (function () {
-      var FIXED_COST = {{ plan.transport_cost + plan.contingency_cost }};
+      var FIXED_COST = {{ plan.contingency_cost }};
       var BUDGET = {{ budget }};
 
       function fmtVND(n) {
@@ -193,7 +197,7 @@
       }
 
       function recalc() {
-        var sums = { hotel: 0, food: 0, drinks: 0, attraction: 0, souvenir: 0 };
+        var sums = { hotel: 0, food: 0, drinks: 0, attraction: 0, souvenir: 0, transport: 0 };
         document.querySelectorAll('.pill-radio:checked').forEach(function (r) {
           var cat = r.dataset.category;
           var scale = parseFloat(r.dataset.scale) || 0;
@@ -208,7 +212,7 @@
           if (el) el.textContent = fmtVND(sums[cat]);
         });
 
-        var variableTotal = sums.hotel + sums.food + sums.drinks + sums.attraction + sums.souvenir;
+        var variableTotal = sums.hotel + sums.food + sums.drinks + sums.attraction + sums.souvenir + sums.transport;
         var grandTotal = variableTotal + FIXED_COST;
 
         var totalEl = document.getElementById('amt-total');
