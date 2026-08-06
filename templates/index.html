@@ -54,22 +54,6 @@
         </div>
       </div>
 
-      <div class="transport-field">
-        <label>Phương tiện di chuyển</label>
-        <div class="transport-grid">
-          {% for t in transport_items %}
-          <div class="transport-option">
-            <input type="radio" id="t-{{ t.key }}" name="transport" value="{{ t.key }}" {% if t.key == 'xe_may' %}checked{% endif %}>
-            <label for="t-{{ t.key }}">
-              <span class="t-icon">{{ t.icon }}</span>
-              {{ t.name }}
-              <span class="t-price">{{ t.unit }}</span>
-            </label>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-
       <div class="cta-row">
         <button type="submit" class="btn-primary">Lập kế hoạch ngay →</button>
         <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình</a>
