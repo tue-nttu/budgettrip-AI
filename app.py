@@ -75,51 +75,58 @@ def dish_type(name):
     return "khac"
 
 
-def pick_snack(pool, tier, k=3, used_names=None, used_types=None):
+def pick_snack(pool, tier, k=3, used_types=None):
     """
-    Chon do an vat DA DANG LOAI MON: uu tien loai mon (vd banh trang nuong,
-    kem, tra...) CHUA xuat hien trong chuyen di truoc, tranh tinh trang
-    nhieu buoi lien tiep deu la cung 1 loai mon (chi khac ten quan).
+    Cho 1 ngay: chon MOT loai mon an vat (vd banh trang nuong) - uu tien loai
+    CHUA dung o cac ngay truoc do - roi lay k quan KHAC NHAU cung ban loai
+    mon do. Ngay hom sau se uu tien loai mon khac, tranh viec ngay nao cung
+    lap lai dung 1 loai (vd banh trang nuong) nhu nhau.
+
+    Luu y: do an vat gia deu thap va it chenh lech nhau, nen o day KHONG loc
+    theo tier truoc - de toi da so luong quan cung 1 loai mon co the chon
+    (vd du 5 quan banh trang nuong deu nam trong cung 1 hang gia).
     """
-    used_names = used_names or set()
     used_types = used_types or set()
-    filtered = [p for p in pool if p.get("tier") == tier]
-    source = filtered if len(filtered) >= k else pool
-    if not source:
+    if not pool:
         return []
 
-    for p in source:
+    for p in pool:
         p["_dish_type"] = dish_type(p["name"])
 
-    shuffled = list(source)
-    random.shuffle(shuffled)
+    by_type = {}
+    for p in pool:
+        by_type.setdefault(p["_dish_type"], []).append(p)
 
-    def rank(p):
-        return (p["_dish_type"] in used_types, p["name"] in used_names)
+    types_list = list(by_type.keys())
+    random.shuffle(types_list)
+    unused_types = [t for t in types_list if t not in used_types]
 
-    candidates = sorted(shuffled, key=rank)
+    # Uu tien loai CHUA dung va co du k quan; neu khong co, chon loai chua
+    # dung bat ky; het loai moi thi danh phai chon lai loai da dung.
+    full_unused = [t for t in unused_types if len(by_type[t]) >= k]
+    if full_unused:
+        chosen_type = random.choice(full_unused)
+    elif unused_types:
+        chosen_type = random.choice(unused_types)
+    else:
+        full_types = [t for t in types_list if len(by_type[t]) >= k]
+        chosen_type = random.choice(full_types) if full_types else random.choice(types_list)
 
-    picks = []
-    picked_types = set()
-    for p in candidates:
-        if len(picks) >= k:
-            break
-        if p["_dish_type"] in picked_types:
-            continue
-        picks.append(p)
-        picked_types.add(p["_dish_type"])
-
-    if len(picks) < k:
+    same_type = by_type[chosen_type]
+    if len(same_type) >= k:
+        picks = random.sample(same_type, k)
+    else:
+        picks = list(same_type)
         picked_names = {p["name"] for p in picks}
-        remaining = [p for p in candidates if p["name"] not in picked_names]
-        for p in remaining:
-            if len(picks) >= k:
-                break
-            picks.append(p)
+        remaining_pool = [p for p in pool if p["name"] not in picked_names]
+        random.shuffle(remaining_pool)
+        # Bu cho trong: uu tien loai CHUA dung o ngay truoc, tranh de loai
+        # vua chon lai (chosen_type) hoac loai da dung roi len vao lan nua.
+        remaining_pool.sort(key=lambda p: (p["_dish_type"] in used_types))
+        picks += remaining_pool[: k - len(picks)]
 
     picks.sort(key=lambda x: (x.get("rating") or 0), reverse=True)
     return picks
-
 
 NUM_RE = re.compile(r"\d{1,3}(?:\.\d{3})+|\d+")
 TAXI_KM_PER_DAY = 25  # uoc tinh so km di chuyen trung binh moi ngay cho khach du lich
@@ -346,11 +353,19 @@ def build_transport():
                 "note": price_text,
             })
         elif "ô tô" in name_lower or "oto" in name_lower:
-            items.append({
-                "key": "oto", "name": "Ô tô tự lái", "icon": "🚗",
-                "price_per_day": avg, "unit": f"{price_text} (tối đa 7 người/xe)",
-                "note": price_text,
-            })
+            pass  # bo qua dong "O to tu lai" chung trong CSV, thay bang 2 muc rieng ben duoi
+    items.append({
+        "key": "oto4", "name": "Ô tô 4 chỗ tự lái", "icon": "🚗",
+        "price_per_day": (850_000 + 950_000) // 2,
+        "unit": "850.000 – 950.000 VNĐ/ngày (tối đa 4 người/xe)",
+        "note": "850.000 – 950.000 VNĐ/ngày",
+    })
+    items.append({
+        "key": "oto7", "name": "Ô tô 7 chỗ tự lái", "icon": "🚙",
+        "price_per_day": (950_000 + 1_250_000) // 2,
+        "unit": "950.000 – 1.250.000 VNĐ/ngày (tối đa 7 người/xe)",
+        "note": "950.000 – 1.250.000 VNĐ/ngày",
+    })
     return items
 
 
@@ -444,7 +459,9 @@ def transport_cost_for(transport_items, transport_key, people, days):
     item = next((t for t in transport_items if t["key"] == transport_key), transport_items[0])
     if item["key"] == "xe_may":
         qty = math.ceil(people / 2)
-    elif item["key"] == "oto":
+    elif item["key"] == "oto4":
+        qty = math.ceil(people / 4)
+    elif item["key"] == "oto7":
         qty = math.ceil(people / 7)
     else:
         qty = 1
@@ -584,7 +601,7 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
         used_drinks.update(p["name"] for p in afternoon_drinks)
         evening_drinks = pick_random(places["drinks"], tier, 3, used_drinks)
         used_drinks.update(p["name"] for p in evening_drinks)
-        evening_snack = pick_snack(places["snack"], tier, 3, used_snack, used_snack_types)
+        evening_snack = pick_snack(places["snack"], tier, 3, used_snack_types)
         used_snack.update(p["name"] for p in evening_snack)
         used_snack_types.update(p["_dish_type"] for p in evening_snack)
 
@@ -613,7 +630,7 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
         evening_blocks = [
             {"label": "🍜 Ăn tối", "picks": dinner, "category": "food"},
             {"label": "☕ Quán nước tối", "picks": evening_drinks, "category": "drinks"},
-            {"label": "🍢 Ăn vặt / đồ nướng", "picks": evening_snack, "category": "food"},
+            {"label": "🍢 Ăn vặt", "picks": evening_snack, "category": "food"},
         ]
         day_stop = {
             "day": d + 1,
@@ -668,12 +685,11 @@ def index():
     transport_items = build_transport()
     return render_template("index.html", transport_items=transport_items)
 
-
 @app.route("/result", methods=["POST"])
 def result():
     people = max(int(request.form.get("people", 1)), 1)
     budget = max(parse_money(request.form.get("budget", 0)), 0)
-    transport_key = request.form.get("transport", "di_bo")
+    transport_key = "xe_may"  # mac dinh de uoc tinh ban dau; nguoi dung se tu chon lai o trang ket qua
     contingency_per_person = max(parse_money(request.form.get("contingency", 0)), 0)
 
     # --- Ngay di / ngay ve -> tinh so ngay + xac dinh mua ---
@@ -705,6 +721,18 @@ def result():
     )
     contingency_cost = contingency_per_person * people
     flexible_budget = max(budget - pre_transport_cost - contingency_cost, 0)
+
+    # Tinh san tong tien cho TAT CA lua chon phuong tien, de nguoi dung tu chon
+    # o trang ket qua (thay vi chon truoc o trang bia) - dung cho JS tinh lai tong.
+    transport_options = []
+    for t in transport_items:
+        opt_cost, _, opt_qty = transport_cost_for(transport_items, t["key"], people, days)
+        transport_options.append({
+            **t,
+            "total_cost": opt_cost,
+            "qty": opt_qty,
+            "is_default": t["key"] == transport_key,
+        })
 
     # --- Goi AI (Google Gemini - mien phi) de AI THAT SU quyet dinh: hang muc,
     #     % phan bo ngan sach, va chon dia diem cu the tu du lieu that ---
@@ -788,7 +816,7 @@ def result():
         people=people, days=days, nights=nights, rooms=rooms, budget=budget,
         start_date=start_date, end_date=end_date, season=season,
         plan=plan, remaining=remaining, over_budget=over_budget, ai_advice=ai_advice,
-        ai_driven=ai_driven, allocation_pct=allocation_pct,
+        ai_driven=ai_driven, allocation_pct=allocation_pct, transport_options=transport_options,
     )
 
 
