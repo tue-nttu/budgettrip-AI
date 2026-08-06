@@ -83,11 +83,8 @@
     <div class="section-title"><span class="num">1</span> Lịch trình theo ngày</div>
     {% for stop in plan.itinerary %}
     <div class="day-block">
-      <div class="day-label">Ngày {{ stop.day }}</div>
-      {% if stop.maps_url %}
-      <a class="day-route-link" href="{{ stop.maps_url }}" target="_blank" rel="noopener">🗺️ Xem lộ trình ngày {{ stop.day }} trên Google Maps</a>
-      {% endif %}
-
+    <div class="day-label">Ngày {{ stop.day }}</div>
+      
       <div class="time-slot">
         <div class="time-icon">🌅</div>
         <div class="time-body">
