@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-{% from '_macros.html' import render_stars, render_option_pills, render_selectable_cards, render_transport_cards %}
+{% from '_macros.html' import render_stars, render_option_pills, render_selectable_cards %}
 
   <nav class="navbar" style="background: var(--pine-700);">
     <div class="brand">Budget<span class="dot">Trip</span> AI</div>
@@ -162,7 +162,24 @@
 
     <!-- ================= PHUONG TIEN ================= -->
     <div class="section-title"><span class="num">4</span> Phương tiện di chuyển</div>
-    {{ render_transport_cards(transport_options, 'transport-pick') }}
+    <div class="card-grid">
+      <div class="place-card">
+        <div class="icon-badge">{{ plan.transport_item.icon }}</div>
+        <h4>{{ plan.transport_item.name }}</h4>
+        <p class="desc">{{ plan.transport_item.note }}</p>
+        <div class="price">{{ plan.transport_item.price_per_day|vnd }} <span class="unit">/ đơn vị / ngày · số lượng cần: {{ plan.transport_qty }}</span></div>
+        {% if plan.transport_item.providers_top3 %}
+        <div class="transport-suggest">
+          <p class="transport-details-title">📍 Gợi ý vài chỗ thuê xe</p>
+          {% for p in plan.transport_item.providers_top3 %}
+          <p class="transport-suggest-item">
+            <b>{{ p.name }}</b>{% if p.phone %} · ☎ {{ p.phone }}{% endif %}{% if p.address %}<br>{{ p.address }}{% endif %}
+          </p>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
 
     <!-- ================= BANG CHI PHI ================= -->
     <div class="section-title"><span class="num">5</span> Chi tiết chi phí <span style="font-size:0.7rem; font-weight:500; color: var(--ink-soft);">(tự cập nhật theo lựa chọn)</span></div>
@@ -174,7 +191,7 @@
       <tr><td>Quán nước ({{ people }} người × {{ days }} ngày)</td><td class="amount" id="amt-drinks">{{ plan.drinks_cost|vnd }}</td></tr>
       <tr><td>Tham quan ({{ people }} người × {{ days }} ngày)</td><td class="amount" id="amt-attraction">{{ plan.attraction_cost|vnd }}</td></tr>
       <tr><td>Quà lưu niệm ({{ people }} người)</td><td class="amount" id="amt-souvenir">{{ plan.souvenir_cost|vnd }}</td></tr>
-      <tr><td>Phương tiện di chuyển ({{ days }} ngày)</td><td class="amount" id="amt-transport">{{ plan.transport_cost|vnd }}</td></tr>
+      <tr><td>Phương tiện di chuyển ({{ days }} ngày)</td><td class="amount">{{ plan.transport_cost|vnd }}</td></tr>
       {% if plan.contingency_cost > 0 %}<tr><td>Chi phí dự phòng ({{ plan.contingency_per_person|vnd }} × {{ people }} người)</td><td class="amount">{{ plan.contingency_cost|vnd }}</td></tr>{% endif %}
       <tr class="total"><td>Tổng cộng</td><td class="amount" id="amt-total">{{ plan.total|vnd }}</td></tr>
     </table>
@@ -189,7 +206,7 @@
 
   <script>
     (function () {
-      var FIXED_COST = {{ plan.contingency_cost }};
+      var FIXED_COST = {{ plan.contingency_cost + plan.transport_cost }};
       var BUDGET = {{ budget }};
 
       function fmtVND(n) {
@@ -197,7 +214,7 @@
       }
 
       function recalc() {
-        var sums = { hotel: 0, food: 0, drinks: 0, attraction: 0, souvenir: 0, transport: 0 };
+        var sums = { hotel: 0, food: 0, drinks: 0, attraction: 0, souvenir: 0 };
         document.querySelectorAll('.pill-radio:checked').forEach(function (r) {
           var cat = r.dataset.category;
           var scale = parseFloat(r.dataset.scale) || 0;
@@ -212,7 +229,7 @@
           if (el) el.textContent = fmtVND(sums[cat]);
         });
 
-        var variableTotal = sums.hotel + sums.food + sums.drinks + sums.attraction + sums.souvenir + sums.transport;
+        var variableTotal = sums.hotel + sums.food + sums.drinks + sums.attraction + sums.souvenir;
         var grandTotal = variableTotal + FIXED_COST;
 
         var totalEl = document.getElementById('amt-total');
