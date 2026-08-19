@@ -53,6 +53,19 @@ CATEGORY_ICONS = {
     "souvenir": "🎁",
 }
 
+# 5 loai hinh luu tru rieng - moi loai 1 file CSV, gop lai thanh 1 pool "hotel" chung
+STAY_TYPES = {
+    "khach_san": {"label": "Khách sạn", "icon": "🏨", "file": "hotels_khach_san.csv"},
+    "villa": {"label": "Villa", "icon": "🏡", "file": "hotels_villa.csv"},
+    "homestay": {"label": "Homestay", "icon": "🛖", "file": "hotels_homestay.csv"},
+    "nha_nghi": {"label": "Nhà nghỉ", "icon": "🏚️", "file": "hotels_nha_nghi.csv"},
+    "can_ho": {"label": "Căn hộ", "icon": "🏢", "file": "hotels_can_ho.csv"},
+}
+
+# So "sao cao cap" (khong phai danh gia nguoi dung) toi thieu de duoc uu tien
+# theo tung hang gia - hang gia cang cao thi cang uu tien khach san nhieu sao.
+TIER_MIN_STARS = {"binh_dan": 0, "tieu_chuan": 3, "cao_cap": 4}
+
 # Tu khoa nhan dien mon "vat" (an vat/trang mieng) - dung lam pool rieng cho "an vat buoi toi"
 SNACK_KEYWORDS = [
     "bánh tráng nướng", "cà rem", "kem", "bánh su kem", "xôi xoài",
@@ -190,6 +203,15 @@ SEASON_INFO = {
 def season_info(month):
     return SEASON_INFO.get(month, {"name": "Không xác định", "note": ""})
 
+def parse_premium_stars(text):
+    """
+    Dem so 'sao cao cap' (hang sang trong cua co so luu tru, KHONG PHAI diem
+    danh gia cua khach). Vd: '⭐️⭐️⭐️⭐️⭐️' -> 5.
+    """
+    if not text:
+        return 0
+    return text.count("⭐")
+
 
 def parse_rating(text):
     """'4,3' | '4.1⭐️' | '⭐ 4.6' | '4.9' | '—' -> float hoac None"""
@@ -234,20 +256,29 @@ def load_csv(filename):
 
 
 def build_hotels():
+    """Gop 5 loai hinh luu tru tu 5 file CSV rieng thanh 1 pool "hotel" chung."""
     items = []
-    for idx, r in enumerate(load_csv("hotels.csv")):
-        items.append({
-            "id": idx,
-            "category": "hotel",
-            "name": r.get("Khách sạn/Homestay", "").strip(),
-            "address": r.get("Địa chỉ", "").strip(),
-            "price": parse_price(r.get("Giá từ", "")),
-            "hours": "",
-            "rating": parse_rating(r.get("Đánh giá", "")),
-            "description": r.get("Mô tả", "").strip(),
-            "unit": "phòng/đêm",
-            "icon": CATEGORY_ICONS["hotel"],
-        })
+    next_id = 0
+    for stay_key, meta in STAY_TYPES.items():
+        for r in load_csv(meta["file"]):
+            star_raw = r.get("Sao") or r.get("Sao ") or ""
+            items.append({
+                "id": next_id,
+                "category": "hotel",
+                "stay_type": stay_key,
+                "stay_type_label": meta["label"],
+                "name": r.get("Tên cơ sở", "").strip(),
+                "address": r.get("Địa chỉ", "").strip(),
+                "price": parse_price(r.get("Giá từ", "")),
+                "hours": "",
+                "rating": parse_rating(r.get("Đánh giá", "")),
+                "premium_stars": parse_premium_stars(star_raw),
+                "segment": r.get("Phân khúc", "").strip(),
+                "description": r.get("Mô tả", "").strip(),
+                "unit": "phòng/đêm",
+                "icon": meta["icon"],
+            })
+            next_id += 1
     return assign_tiers(items)
 
 
@@ -327,44 +358,47 @@ def build_souvenirs():
 
 def build_transport():
     items = [{
-        "key": "di_bo",
-        "name": "Đi bộ",
-        "icon": "🚶",
-        "price_per_day": 0,
-        "unit": "Miễn phí",
+        "key": "di_bo", "name": "Đi bộ", "icon": "🚶",
+        "price_per_day": 0, "unit": "Miễn phí",
         "note": "Phù hợp khi các điểm ở gần trung tâm, đi lại trong bán kính ngắn.",
+        "documents": "", "providers": "",
     }]
+    car_documents, car_providers = "", ""
     for r in load_csv("transport.csv"):
         raw_name = r.get("LOẠI PHƯƠNG TIỆN", "").strip()
         price_text = r.get("GIÁ THAM KHẢO", "").strip()
+        documents = r.get("GIẤY TỜ CẦN CÓ", "").strip()
+        providers = r.get("MỘT SỐ ĐƠN VỊ DUNG CẤP UY TÍN", "").strip()
         avg = parse_price(price_text)
         name_lower = raw_name.lower()
         if "xe máy" in name_lower:
             items.append({
                 "key": "xe_may", "name": "Xe máy", "icon": "🛵",
                 "price_per_day": avg, "unit": f"{price_text} (2 người/xe)",
-                "note": price_text,
+                "note": price_text, "documents": documents, "providers": providers,
             })
         elif "taxi" in name_lower:
             items.append({
                 "key": "taxi", "name": "Taxi", "icon": "🚕",
                 "price_per_day": avg * TAXI_KM_PER_DAY,
                 "unit": f"{price_text} · ước tính {TAXI_KM_PER_DAY}km/ngày",
-                "note": price_text,
+                "note": price_text, "documents": documents, "providers": providers,
             })
         elif "ô tô" in name_lower or "oto" in name_lower:
-            pass  # bo qua dong "O to tu lai" chung trong CSV, thay bang 2 muc rieng ben duoi
+            car_documents, car_providers = documents, providers
     items.append({
         "key": "oto4", "name": "Ô tô 4 chỗ tự lái", "icon": "🚗",
         "price_per_day": (850_000 + 950_000) // 2,
         "unit": "850.000 – 950.000 VNĐ/ngày (tối đa 4 người/xe)",
         "note": "850.000 – 950.000 VNĐ/ngày",
+        "documents": car_documents, "providers": car_providers,
     })
     items.append({
         "key": "oto7", "name": "Ô tô 7 chỗ tự lái", "icon": "🚙",
         "price_per_day": (950_000 + 1_250_000) // 2,
         "unit": "950.000 – 1.250.000 VNĐ/ngày (tối đa 7 người/xe)",
         "note": "950.000 – 1.250.000 VNĐ/ngày",
+        "documents": car_documents, "providers": car_providers,
     })
     return items
 
@@ -429,8 +463,18 @@ def pick_random(pool, tier, k=3, used=None):
 
 
 def pick_hotels(pool, tier, k=3):
-    """Nhu pick_random, nhung sap xep 3 lua chon theo GIA TANG DAN (thap -> cao)."""
-    picks = pick_random(pool, tier, k)
+    filtered = [p for p in pool if p.get("tier") == tier]
+    source = filtered if len(filtered) >= k else pool
+    if not source:
+        return []
+
+    min_stars = TIER_MIN_STARS.get(tier, 0)
+    starred_enough = [p for p in source if p.get("premium_stars", 0) >= min_stars]
+    candidates = starred_enough if len(starred_enough) >= k else source
+
+    random.shuffle(candidates)
+    candidates.sort(key=lambda x: x.get("premium_stars", 0), reverse=True)
+    picks = candidates[:k]
     picks.sort(key=lambda x: x["price"])
     return picks
 
@@ -683,7 +727,7 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
 @app.route("/", methods=["GET"])
 def index():
     transport_items = build_transport()
-    return render_template("index.html", transport_items=transport_items)
+    return render_template("index.html", transport_items=transport_items, stay_types=STAY_TYPES)
 
 @app.route("/result", methods=["POST"])
 def result():
@@ -714,7 +758,15 @@ def result():
     places = load_all_places()
     transport_items = build_transport()
 
-    # Uoc tinh truoc chi phi di chuyen + du phong (co dinh, khong phu thuoc AI)
+    selected_stay_types = request.form.getlist("stay_types")
+    selected_stay_types = [t for t in selected_stay_types if t in STAY_TYPES]
+    if not selected_stay_types:
+        selected_stay_types = list(STAY_TYPES.keys())
+    places["hotel"] = [h for h in places["hotel"] if h.get("stay_type") in selected_stay_types]
+    if not places["hotel"]:
+        places = load_all_places()
+
+    # Uoc tinh truoc chi phi di chuyen + du phong
     # de biet AI con bao nhieu "ngan sach linh hoat" de phan bo cho khach san/an uong/...
     pre_transport_cost, pre_transport_item, _ = transport_cost_for(
         transport_items, transport_key, people, days
