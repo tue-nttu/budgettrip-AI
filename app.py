@@ -355,6 +355,35 @@ def build_souvenirs():
         })
     return assign_tiers(items)
 
+def parse_providers(text, limit=3):
+    """Tach chuoi tho thanh danh sach tung don vi rieng {name, phone, address}."""
+    if not text:
+        return []
+    normalized = text
+    for kw in ("SĐT", "Sdt", "SDT", "Địa chỉ"):
+        normalized = normalized.replace(kw, "\n" + kw)
+
+    lines = [l.strip() for l in normalized.split("\n") if l.strip()]
+    entries = []
+    current = None
+    for line in lines:
+        low = line.lower()
+        if low.startswith("sđt") or low.startswith("sdt"):
+            if current:
+                m = re.search(r"([\d\s.]{8,15})", line)
+                current["phone"] = m.group(1).strip() if m else ""
+        elif low.startswith("địa chỉ"):
+            if current:
+                current["address"] = line.split(":", 1)[-1].strip(" :")
+        elif low.startswith("ngoài ra") or low.startswith("ngoai ra"):
+            continue
+        else:
+            if current:
+                entries.append(current)
+            current = {"name": line.rstrip(":").strip(), "phone": "", "address": ""}
+    if current:
+        entries.append(current)
+    return entries[:limit] if limit else entries
 
 def build_transport():
     items = [{
@@ -400,6 +429,8 @@ def build_transport():
         "note": "950.000 – 1.250.000 VNĐ/ngày",
         "documents": car_documents, "providers": car_providers,
     })
+    for it in items:
+        it["providers_top3"] = parse_providers(it.get("providers", ""), limit=3)
     return items
 
 
@@ -733,7 +764,7 @@ def index():
 def result():
     people = max(int(request.form.get("people", 1)), 1)
     budget = max(parse_money(request.form.get("budget", 0)), 0)
-    transport_key = "xe_may"  # mac dinh de uoc tinh ban dau; nguoi dung se tu chon lai o trang ket qua
+    transport_key = request.form.get("transport", "xe_may")
     contingency_per_person = max(parse_money(request.form.get("contingency", 0)), 0)
 
     # --- Ngay di / ngay ve -> tinh so ngay + xac dinh mua ---
@@ -758,11 +789,9 @@ def result():
     places = load_all_places()
     transport_items = build_transport()
 
-    selected_stay_types = request.form.getlist("stay_types")
-    selected_stay_types = [t for t in selected_stay_types if t in STAY_TYPES]
-    if not selected_stay_types:
-        selected_stay_types = list(STAY_TYPES.keys())
-    places["hotel"] = [h for h in places["hotel"] if h.get("stay_type") in selected_stay_types]
+    selected_stay_type = request.form.get("stay_type", "")
+    if selected_stay_type in STAY_TYPES:
+        places["hotel"] = [h for h in places["hotel"] if h.get("stay_type") == selected_stay_type]
     if not places["hotel"]:
         places = load_all_places()
 
