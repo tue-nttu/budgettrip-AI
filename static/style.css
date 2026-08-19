@@ -627,7 +627,35 @@ footer.site-footer {
 .option-pill .pill-name { font-weight: 600; color: var(--ink); display: block; }
 .option-pill .pill-price { font-size: 0.78rem; color: var(--ink-soft); }
 .pill-badge { font-size: 0.68rem; color: var(--marigold-600); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 2px; }
+.stay-type-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--pine-700);
+  background: var(--mist-100, #eef2ee);
+  padding: 2px 9px;
+  border-radius: 100px;
+  margin: 4px 0 2px;
+}
 
+.transport-details { display: none; }
+.selectable-card:has(input.pill-radio:checked) .transport-details {
+  display: block;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  text-align: left;
+}
+.transport-details-hint { font-size: 0.72rem; color: var(--pine-700); font-weight: 600; margin-bottom: 6px; }
+.transport-details-title { font-size: 0.78rem; font-weight: 700; color: var(--ink); margin: 8px 0 2px; }
+.transport-details-text {
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  white-space: pre-line;
+  line-height: 1.55;
+  max-height: 220px;
+  overflow-y: auto;
+}
 /* ---------- BROWSE PAGE ---------- */
 .browse-tabs {
   display: flex;
