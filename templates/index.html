@@ -45,12 +45,23 @@
           <input type="date" id="end_date" name="end_date" required>
         </div>
         <div class="field">
-          <label for="budget">Ngân sách dự kiến <span class="unit">(VND, tổng cả nhóm)</span></label>
-          <input type="text" inputmode="numeric" id="budget" name="budget" value="6.000.000" required>
-        </div>
-        <div class="field">
           <label for="contingency">Chi phí dự phòng <span class="unit">(VND / người)</span></label>
           <input type="text" inputmode="numeric" id="contingency" name="contingency" value="100.000">
+        </div>
+      </div>
+
+      <div class="transport-field">
+        <label>Loại hình lưu trú <span class="unit">(chọn nhiều được, để trống = tất cả)</span></label>
+        <div class="transport-grid">
+          {% for key, meta in stay_types.items() %}
+          <div class="transport-option">
+            <input type="checkbox" id="st-{{ key }}" name="stay_types" value="{{ key }}">
+            <label for="st-{{ key }}">
+              <span class="t-icon">{{ meta.icon }}</span>
+              {{ meta.label }}
+            </label>
+          </div>
+          {% endfor %}
         </div>
       </div>
 
