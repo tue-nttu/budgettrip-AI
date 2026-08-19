@@ -39,7 +39,9 @@
              class="pill-radio" {% if loop.first %}checked{% endif %}>
       {% if loop.first %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
       <div class="icon-badge">{{ it.icon }}</div>
+      {% if it.stay_type_label %}<span class="stay-type-tag">{{ it.stay_type_label }}</span>{% endif %}
       <h4>{{ it.name }}</h4>
+      {% if it.premium_stars %}<p class="meta">🏅 Hạng {{ it.premium_stars }} sao</p>{% endif %}
       {{ render_stars(it.rating) }}
       <p class="meta">📍 {{ it.address }}</p>
       <p class="desc">{{ it.description }}</p>
@@ -61,6 +63,19 @@
       <h4>{{ t.name }}</h4>
       <p class="desc">{{ t.note }}</p>
       <div class="price">{{ t.total_cost|vnd }} <span class="unit">cho cả chuyến{% if t.qty > 1 %} · {{ t.qty }} xe{% endif %}</span></div>
+      {% if t.documents or t.providers %}
+      <div class="transport-details">
+        <p class="transport-details-hint">👇 Đang chọn — xem chi tiết bên dưới</p>
+        {% if t.documents %}
+        <p class="transport-details-title">📄 Giấy tờ cần có</p>
+        <p class="transport-details-text">{{ t.documents }}</p>
+        {% endif %}
+        {% if t.providers %}
+        <p class="transport-details-title">📍 Đơn vị cho thuê uy tín</p>
+        <p class="transport-details-text">{{ t.providers }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
     </label>
     {% endfor %}
   </div>
