@@ -37,12 +37,15 @@
           <input type="number" id="people" name="people" min="1" value="2" required>
         </div>
         <div class="field">
-          <label for="start_date">Ngày đi</label>
-          <input type="date" id="start_date" name="start_date" required>
+        <div class="field">
+          <label for="start_date_display">Ngày đi</label>
+          <input type="text" id="start_date_display" placeholder="dd/mm/yyyy" inputmode="numeric" maxlength="10" required>
+          <input type="hidden" id="start_date" name="start_date">
         </div>
         <div class="field">
-          <label for="end_date">Ngày về</label>
-          <input type="date" id="end_date" name="end_date" required>
+          <label for="end_date_display">Ngày về</label>
+          <input type="text" id="end_date_display" placeholder="dd/mm/yyyy" inputmode="numeric" maxlength="10" required>
+          <input type="hidden" id="end_date" name="end_date">
         </div>
         <div class="field">
           <label for="budget">Ngân sách dự kiến <span class="unit">(VND, tổng cả nhóm)</span></label>
