@@ -807,3 +807,78 @@ font-weight: 600;
   color: var(--ink);
 }
 .season-note b { color: var(--marigold-600); }
+
+/* ---------- FOOTER (kieu Traveloka, dai anh cat tu anh bia) ---------- */
+.footer-band {
+  height: 180px;
+  background-image:
+    linear-gradient(180deg, rgba(22,40,31,0) 0%, rgba(22,40,31,0.9) 100%),
+    url('images/hero-cover.jpg');
+  background-size: cover;
+  background-position: center 15%;
+}
+
+.site-footer-rich {
+  background: var(--pine-900);
+  color: rgba(255,255,255,0.82);
+  padding: 40px 24px 20px;
+}
+
+.footer-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.footer-brand { max-width: 340px; }
+
+.footer-logo {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.footer-logo .dot { color: var(--marigold-500); }
+
+.footer-tagline {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.68);
+  margin: 0;
+}
+
+.footer-links { display: flex; flex-direction: column; gap: 10px; }
+
+.footer-links-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.footer-links a {
+  color: rgba(255,255,255,0.72);
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+.footer-links a:hover { color: var(--marigold-500); }
+
+.footer-bottom {
+  max-width: 1080px;
+  margin: 30px auto 0;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .footer-band { height: 120px; }
+  .footer-inner { flex-direction: column; gap: 26px; }
+}
