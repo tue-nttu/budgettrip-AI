@@ -130,17 +130,27 @@
       });
     })();
 
-    (function () {
-      function formatMoneyInput(input) {
-        if (!input) return;
-        input.addEventListener('input', function () {
-          const digits = input.value.replace(/\D/g, '');
-          input.value = digits ? Number(digits).toLocaleString('vi-VN') : '';
-        });
+(function () {
+  function formatMoneyInput(input) {
+    if (!input) return;
+    input.addEventListener('input', function () {
+      const before = input.value.slice(0, input.selectionStart);
+      const digitsBefore = before.replace(/\D/g, '').length;
+
+      const allDigits = input.value.replace(/\D/g, '');
+      input.value = allDigits ? Number(allDigits).toLocaleString('vi-VN') : '';
+
+      let pos = 0, count = 0;
+      while (pos < input.value.length && count < digitsBefore) {
+        if (/\d/.test(input.value[pos])) count++;
+        pos++;
       }
-      formatMoneyInput(document.getElementById('budget'));
-      formatMoneyInput(document.getElementById('contingency'));
-    })();
+      input.setSelectionRange(pos, pos);
+    });
+  }
+  formatMoneyInput(document.getElementById('budget'));
+  formatMoneyInput(document.getElementById('contingency'));
+})();
   </script>
 </body>
 </html>
