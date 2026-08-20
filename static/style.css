@@ -807,12 +807,12 @@ font-weight: 600;
 
 /* ---------- FOOTER (kieu Traveloka, dai anh cat tu anh bia) ---------- */
 .footer-band {
-  height: 180px;
+  height: 220px;
   background-image:
     linear-gradient(180deg, rgba(22,40,31,0) 0%, rgba(22,40,31,0.9) 100%),
     url('images/anhbia3.jpg');
   background-size: cover;
-  background-position: center 20%;
+  background-position: center 65%;
 }
 
 .site-footer-rich {
