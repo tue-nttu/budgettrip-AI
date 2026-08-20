@@ -27,66 +27,65 @@
   </header>
 
   <div class="container">
-    <form class="form-card" action="{{ url_for('result') }}" method="POST">
-      <h2>Thông tin chuyến đi của bạn</h2>
-      <p class="hint">Điền thông tin bên dưới, phần còn lại để BudgetTrip AI lo.</p>
+ <form class="form-card" action="{{ url_for('result') }}" method="POST">
+  <h2>Thông tin chuyến đi của bạn</h2>
+  <p class="hint">Điền thông tin bên dưới, phần còn lại để BudgetTrip AI lo.</p>
 
-      <div class="form-grid">
-        <div class="field">
-          <label for="people">Số người</label>
-          <input type="number" id="people" name="people" min="1" value="2" required>
-        </div>
-        <div class="field">
-        <div class="field">
-          <label for="start_date_display">Ngày đi</label>
-          <input type="text" id="start_date_display" placeholder="dd/mm/yyyy" inputmode="numeric" maxlength="10" required>
-          <input type="hidden" id="start_date" name="start_date">
-        </div>
-        <div class="field">
-          <label for="end_date_display">Ngày về</label>
-          <input type="text" id="end_date_display" placeholder="dd/mm/yyyy" inputmode="numeric" maxlength="10" required>
-          <input type="hidden" id="end_date" name="end_date">
-        </div>
-        <div class="field">
-          <label for="budget">Ngân sách dự kiến <span class="unit">(VND, tổng cả nhóm)</span></label>
-          <input type="text" inputmode="numeric" id="budget" name="budget" value="6.000.000" required>
-        </div>
-        <div class="field">
-          <label for="contingency">Chi phí dự phòng <span class="unit">(VND / người)</span></label>
-          <input type="text" inputmode="numeric" id="contingency" name="contingency" value="100.000">
-        </div>
-        <div class="field">
-          <label for="stay_type">Loại hình lưu trú</label>
-          <select id="stay_type" name="stay_type">
-            <option value="">Tất cả loại hình</option>
-            {% for key, meta in stay_types.items() %}
-            <option value="{{ key }}">{{ meta.icon }} {{ meta.label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
+  <div class="form-grid">
+    <div class="field">
+      <label for="people">Số người</label>
+      <input type="number" id="people" name="people" min="1" value="2" required>
+    </div>
+    <div class="field">
+      <label for="start_date_display">Ngày đi</label>
+      <input type="text" id="start_date_display" placeholder="dd/mm/yyyy" inputmode="numeric" maxlength="10" required>
+      <input type="hidden" id="start_date" name="start_date">
+    </div>
+    <div class="field">
+      <label for="end_date_display">Ngày về</label>
+      <input type="text" id="end_date_display" placeholder="dd/mm/yyyy" inputmode="numeric" maxlength="10" required>
+      <input type="hidden" id="end_date" name="end_date">
+    </div>
+    <div class="field">
+      <label for="budget">Ngân sách dự kiến <span class="unit">(VND, tổng cả nhóm)</span></label>
+      <input type="text" inputmode="numeric" id="budget" name="budget" value="6.000.000" required>
+    </div>
+    <div class="field">
+      <label for="contingency">Chi phí dự phòng <span class="unit">(VND / người)</span></label>
+      <input type="text" inputmode="numeric" id="contingency" name="contingency" value="100.000">
+    </div>
+    <div class="field">
+      <label for="stay_type">Loại hình lưu trú</label>
+      <select id="stay_type" name="stay_type">
+        <option value="">Tất cả loại hình</option>
+        {% for key, meta in stay_types.items() %}
+        <option value="{{ key }}">{{ meta.icon }} {{ meta.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
 
-      <div class="transport-field">
-        <label>Phương tiện di chuyển</label>
-        <div class="transport-grid">
-          {% for t in transport_items %}
-          <div class="transport-option">
-            <input type="radio" id="t-{{ t.key }}" name="transport" value="{{ t.key }}" {% if t.key == 'xe_may' %}checked{% endif %}>
-            <label for="t-{{ t.key }}">
-              <span class="t-icon">{{ t.icon }}</span>
-              {{ t.name }}
-              <span class="t-price">{{ t.unit }}</span>
-            </label>
-          </div>
-          {% endfor %}
-        </div>
+  <div class="transport-field">
+    <label>Phương tiện di chuyển</label>
+    <div class="transport-grid">
+      {% for t in transport_items %}
+      <div class="transport-option">
+        <input type="radio" id="t-{{ t.key }}" name="transport" value="{{ t.key }}" {% if t.key == 'xe_may' %}checked{% endif %}>
+        <label for="t-{{ t.key }}">
+          <span class="t-icon">{{ t.icon }}</span>
+          {{ t.name }}
+          <span class="t-price">{{ t.unit }}</span>
+        </label>
       </div>
+      {% endfor %}
+    </div>
+  </div>
 
-      <div class="cta-row">
-        <button type="submit" class="btn-primary">Lập kế hoạch ngay →</button>
-        <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình</a>
-      </div>
-    </form>
+  <div class="cta-row">
+    <button type="submit" class="btn-primary">Lập kế hoạch ngay →</button>
+    <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình</a>
+  </div>
+</form>
   </div>
 
   <div class="footer-band"></div>
