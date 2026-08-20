@@ -84,54 +84,43 @@
         <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình</a>
       </div>
     </form>
-
-    <section class="features">
-      <div class="feature">
-        <span class="icon">🏨</span>
-        <h3>Khách sạn phù hợp</h3>
-        <p>Gợi ý chỗ ở đúng hạng mức ngân sách</p>
-      </div>
-      <div class="feature">
-        <span class="icon">🍲</span>
-        <h3>Ẩm thực địa phương</h3>
-        <p>Tính sẵn chi phí ăn uống mỗi ngày</p>
-      </div>
-      <div class="feature">
-        <span class="icon">🌲</span>
-        <h3>Tham quan &amp; vui chơi</h3>
-        <p>Lịch trình theo từng ngày rõ ràng</p>
-      </div>
-      <div class="feature">
-        <span class="icon">🎁</span>
-        <h3>Quà lưu niệm</h3>
-        <p>Ước tính chi phí mua sắm mang về</p>
-      </div>
-    </section>
   </div>
 
-  <footer class="site-footer">BudgetTrip AI</footer>
+  <div class="footer-band"></div>
+  <footer class="site-footer-rich">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">Budget<span class="dot">Trip</span> AI</div>
+        <p class="footer-tagline">Lên kế hoạch thông minh, vi vu mọi ngóc ngách Đà Lạt — đúng ngân sách, đúng gu của bạn.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-links-title">Khám phá</div>
+        <a href="{{ url_for('browse') }}?tab=hotel">🏨 Lưu trú</a>
+        <a href="{{ url_for('browse') }}?tab=food">🍜 Ẩm thực</a>
+        <a href="{{ url_for('browse') }}?tab=drinks">☕ Quán nước</a>
+        <a href="{{ url_for('browse') }}?tab=attraction">🌲 Tham quan</a>
+        <a href="{{ url_for('browse') }}?tab=souvenir">🎁 Lưu niệm</a>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 BudgetTrip AI — Đồ án cuối kì</div>
+  </footer>
 
   <script>
-    // --- Mac dinh ngay di / ngay ve + rang buoc ngay ve khong truoc ngay di ---
     (function () {
       const startInput = document.getElementById('start_date');
       const endInput = document.getElementById('end_date');
-
       function toISO(d) {
         const off = d.getTimezoneOffset();
         const local = new Date(d.getTime() - off * 60000);
         return local.toISOString().slice(0, 10);
       }
-
       const today = new Date();
       const defaultEnd = new Date();
       defaultEnd.setDate(today.getDate() + 2);
-
       startInput.min = toISO(today);
       startInput.value = toISO(today);
       endInput.min = toISO(defaultEnd);
       endInput.value = toISO(defaultEnd);
-
       startInput.addEventListener('change', function () {
         if (!startInput.value) return;
         endInput.min = startInput.value;
@@ -141,7 +130,6 @@
       });
     })();
 
-    // --- Tu dong them dau cham moi 3 so khi nhap ngan sach / du phong ---
     (function () {
       function formatMoneyInput(input) {
         if (!input) return;
