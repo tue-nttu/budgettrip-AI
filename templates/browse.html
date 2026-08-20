@@ -3,52 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tự chọn lịch trình – BudgetTrip AI</title>
+  <title>BudgetTrip AI – Đà Lạt trong tầm ngân sách của bạn</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-{% from '_macros.html' import render_place_card %}
 
-  <nav class="navbar" style="background: var(--pine-700);">
-    <div class="brand">Budget<span class="dot">Trip</span> AI</div>
-    <a href="{{ url_for('index') }}" style="color:#fff; font-size:0.9rem; text-decoration:none;">← Về trang chủ</a>
-  </nav>
-
-  <div class="container" style="padding-top: 36px; padding-bottom: 60px;">
-    <h1 style="font-size:1.8rem; margin-bottom: 6px;">Tự chọn lịch trình của riêng bạn</h1>
-    <p style="color: var(--ink-soft); margin-bottom: 10px;">
-      Duyệt toàn bộ danh sách khách sạn, quán ăn, quán nước, điểm tham quan và quà lưu niệm ở Đà Lạt — chọn theo đúng gu của bạn, không cần theo gợi ý tự động.
-    </p>
-
-    <div class="browse-tabs">
-      {% for cat, items in places.items() %}
-      <div class="browse-tab {% if loop.first %}active{% endif %}" data-target="panel-{{ cat }}">
-        {{ items[0].icon if items else '' }} {{ category_labels[cat] }}
-        <span class="count">({{ items|length }})</span>
+  <div class="page-cover">
+  <header class="hero">
+    <nav class="navbar">
+      <div class="brand">
+        <img class="brand-logo brand-logo-lg" src="{{ url_for('static', filename='images/logo.png') }}" alt="BudgetTrip AI">
       </div>
-      {% endfor %}
+      <span class="tagline">LẬP KẾ HOẠCH · ĐÀ LẠT</span>
+    </nav>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Thành phố ngàn hoa · Đà Lạt</div>
+      <h1 class="hero-headline">
+        <span class="line-main">Đà Lạt trong tầm tay</span>
+        <span class="divider-dash">–</span>
+        <span class="line-accent">Du lịch trong tầm giá</span>
+      </h1>
+      <p class="hero-subline">Lên kế hoạch thông minh, vi vu mọi ngóc ngách</p>
     </div>
+  </header>
 
-    {% for cat, items in places.items() %}
-    <div class="card-grid browse-panel {% if loop.first %}active{% endif %}" id="panel-{{ cat }}">
-      {% for item in items %}
-        {{ render_place_card(item) }}
-      {% endfor %}
-    </div>
-    {% endfor %}
+  <div class="container">
+    <form class="form-card" action="{{ url_for('result') }}" method="POST">
+      <h2>Thông tin chuyến đi của bạn</h2>
+      <p class="hint">Điền thông tin bên dưới, phần còn lại để BudgetTrip AI lo.</p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="people">Số người</label>
+          <input type="number" id="people" name="people" min="1" value="2" required>
+        </div>
+        <div class="field">
+          <label for="start_date">Ngày đi</label>
+          <input type="date" id="start_date" name="start_date" required>
+        </div>
+        <div class="field">
+          <label for="end_date">Ngày về</label>
+          <input type="date" id="end_date" name="end_date" required>
+        </div>
+        <div class="field">
+          <label for="budget">Ngân sách dự kiến <span class="unit">(VND, tổng cả nhóm)</span></label>
+          <input type="text" inputmode="numeric" id="budget" name="budget" value="6.000.000" required>
+        </div>
+        <div class="field">
+          <label for="contingency">Chi phí dự phòng <span class="unit">(VND / người)</span></label>
+          <input type="text" inputmode="numeric" id="contingency" name="contingency" value="100.000">
+        </div>
+        <div class="field">
+          <label for="stay_type">Loại hình lưu trú</label>
+          <select id="stay_type" name="stay_type">
+            <option value="">Tất cả loại hình</option>
+            {% for key, meta in stay_types.items() %}
+            <option value="{{ key }}">{{ meta.icon }} {{ meta.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="transport-field">
+        <label>Phương tiện di chuyển</label>
+        <div class="transport-grid">
+          {% for t in transport_items %}
+          <div class="transport-option">
+            <input type="radio" id="t-{{ t.key }}" name="transport" value="{{ t.key }}" {% if t.key == 'xe_may' %}checked{% endif %}>
+            <label for="t-{{ t.key }}">
+              <span class="t-icon">{{ t.icon }}</span>
+              {{ t.name }}
+              <span class="t-price">{{ t.unit }}</span>
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <button type="submit" class="btn-primary">Lập kế hoạch ngay →</button>
+        <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình</a>
+      </div>
+    </form>
+  </div>
   </div>
 
-  <footer class="site-footer">BudgetTrip AI — Đồ án cuối kì · Dữ liệu tổng hợp từ khảo sát thực tế</footer>
+  <footer class="site-footer-rich">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">Budget<span class="dot">Trip</span> AI</div>
+        <p class="footer-tagline">Lên kế hoạch thông minh, vi vu mọi ngóc ngách Đà Lạt — đúng ngân sách, đúng gu của bạn.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-links-title">Khám phá</div>
+        <a href="{{ url_for('browse') }}?tab=hotel">🏨 Lưu trú</a>
+        <a href="{{ url_for('browse') }}?tab=food">🍜 Món ăn</a>
+        <a href="{{ url_for('browse') }}?tab=attraction">🌲 Tham quan</a>
+        <a href="{{ url_for('browse') }}?tab=souvenir">🎁 Lưu niệm</a>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 BudgetTrip AI</div>
+  </footer>
 
   <script>
-    document.querySelectorAll('.browse-tab').forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        document.querySelectorAll('.browse-tab').forEach(function (t) { t.classList.remove('active'); });
-        document.querySelectorAll('.browse-panel').forEach(function (p) { p.classList.remove('active'); });
-        tab.classList.add('active');
-        document.getElementById(tab.dataset.target).classList.add('active');
+    // --- Mac dinh ngay di / ngay ve + rang buoc ngay ve khong truoc ngay di ---
+    (function () {
+      const startInput = document.getElementById('start_date');
+      const endInput = document.getElementById('end_date');
+
+      function toISO(d) {
+        const off = d.getTimezoneOffset();
+        const local = new Date(d.getTime() - off * 60000);
+        return local.toISOString().slice(0, 10);
+      }
+
+      const today = new Date();
+      const defaultEnd = new Date();
+      defaultEnd.setDate(today.getDate() + 2);
+
+      startInput.min = toISO(today);
+      startInput.value = toISO(today);
+      endInput.min = toISO(defaultEnd);
+      endInput.value = toISO(defaultEnd);
+
+      startInput.addEventListener('change', function () {
+        if (!startInput.value) return;
+        endInput.min = startInput.value;
+        if (endInput.value < startInput.value) {
+          endInput.value = startInput.value;
+        }
       });
-    });
+    })();
+
+    // --- Tu dong them dau cham moi 3 so khi nhap ngan sach / du phong ---
+    (function () {
+      function formatMoneyInput(input) {
+        if (!input) return;
+        input.addEventListener('input', function () {
+          const digits = input.value.replace(/\D/g, '');
+          input.value = digits ? Number(digits).toLocaleString('vi-VN') : '';
+        });
+      }
+      formatMoneyInput(document.getElementById('budget'));
+      formatMoneyInput(document.getElementById('contingency'));
+    })();
   </script>
 </body>
 </html>
