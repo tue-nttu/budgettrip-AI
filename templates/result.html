@@ -6,6 +6,22 @@
   <title>Lịch trình Đà Lạt của bạn – BudgetTrip AI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
+    /* Phóng to và mở rộng phần Header (Navbar) */
+    .navbar {
+      padding: 20px 36px !important;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .navbar .brand {
+      font-size: 1.6rem !important;
+      font-weight: 700;
+    }
+    .navbar a {
+      font-size: 1.05rem !important;
+      font-weight: 500;
+    }
+
     /* CSS cho Modal Chia sẻ */
     .share-modal {
       display: none;
@@ -63,86 +79,65 @@
 <body>
 {% from '_macros.html' import render_stars, render_option_pills, render_selectable_cards %}
 
+  <!-- Header rộng hơn, chữ to rõ -->
   <nav class="navbar" style="background: var(--pine-700);">
     <div class="brand">Budget<span class="dot">Trip</span> AI</div>
-    <a href="{{ url_for('index') }}" style="color:#fff; font-size:0.9rem; text-decoration:none;">← Lập kế hoạch khác</a>
+    <a href="{{ url_for('index') }}" style="color:#fff; text-decoration:none;">← Lập kế hoạch khác</a>
   </nav>
 
   <div class="container" style="padding-top: 36px;">
 
-    <h1 style="font-size:1.8rem; margin-bottom: 6px;">Lịch trình Đà Lạt gợi ý cho bạn</h1>
-    <p style="color: var(--ink-soft); margin-bottom: 26px;">
-      {{ people }} người · {{ start_date.strftime('%d/%m/%Y') }} → {{ end_date.strftime('%d/%m/%Y') }} ({{ days }} ngày{% if nights > 0 %} {{ nights }} đêm{% endif %}) · Ngân sách {{ budget|vnd }}
-    </p>
-
-    <div class="summary-bar">
-      <div class="summary-chip"><div class="label">Số người</div><div class="value">{{ people }}</div></div>
-      <div class="summary-chip"><div class="label">Số ngày</div><div class="value">{{ days }}</div></div>
-      <div class="summary-chip"><div class="label">Số phòng cần</div><div class="value">{{ rooms }}</div></div>
-      <div class="summary-chip"><div class="label">Ngân sách</div><div class="value">{{ budget|vnd }}</div></div>
+    <!-- Tiêu đề và thông tin tổng quan -->
+    <div style="margin-bottom: 24px;">
+      <h1 style="font-size: 2.2rem; margin-bottom: 8px; color: var(--pine-900);">Lịch trình Đà Lạt gợi ý cho bạn</h1>
+      <p style="font-size: 1.05rem; color: var(--ink-soft);">
+        👥 <b>{{ people }} người</b> · 📅 {{ start_date.strftime('%d/%m/%Y') }} → {{ end_date.strftime('%d/%m/%Y') }} (<b>{{ days }} ngày{% if nights > 0 %} {{ nights }} đêm{% endif %}</b>) · 💰 Ngân sách: <b>{{ budget|vnd }}</b>
+      </p>
     </div>
 
-    <div class="trip-info-card">
-      <div class="trip-info-row">
-        <span class="trip-info-icon">🏷️</span>
+    <!-- Bố cục dạng Lưới (Grid) 2 cột cho phần đầu trang để đỡ rối mắt -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+      
+      <!-- Cột trái: Thông tin hạng mức & mùa vụ -->
+      <div class="trip-info-card" style="margin-bottom: 0; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+        <div class="trip-info-row" style="margin-bottom: 8px;">
+          <span class="trip-info-icon">🏷️</span>
+          <div>
+            <span style="font-size: 0.85rem; color: var(--ink-soft);">Hạng mức:</span>
+            <span style="font-weight: 600; color: var(--pine-900);">{{ plan.tier_label }}{% if ai_driven %} <span class="ai-tag">🤖 AI đề xuất</span>{% endif %}</span>
+          </div>
+        </div>
+        {% if season %}
+        <div class="trip-info-row" style="margin-bottom: 0;">
+          <span class="trip-info-icon">🗓️</span>
+          <div>
+            <span style="font-weight: 600; color: var(--pine-900);">{{ season.name }}</span>
+            <div style="font-size: 0.8rem; color: var(--ink-soft);">{{ season.note }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Cột phải: Trạng thái ngân sách -->
+      <div class="budget-banner ok" id="budget-banner-box" style="margin-bottom: 0; height: 100%; display: flex; align-items: center; padding: 16px;">
+        <div class="emoji" id="budget-banner-emoji" style="font-size: 1.8rem; margin-right: 12px;">✅</div>
         <div>
-          <div class="trip-info-label">Hạng mức áp dụng</div>
-          <div class="trip-info-value">{{ plan.tier_label }}{% if ai_driven %} <span class="ai-tag">🤖 AI đề xuất</span>{% endif %}</div>
+          <h3 id="budget-banner-title" style="font-size: 1rem; margin-bottom: 2px;">Đang tính toán...</h3>
+          <p id="budget-banner-desc" style="font-size: 0.85rem; margin: 0;"></p>
         </div>
       </div>
-      {% if season %}
-      <div class="trip-info-row">
-        <span class="trip-info-icon">🗓️</span>
-        <div>
-          <div class="trip-info-label">{{ season.name }}</div>
-          <div class="trip-info-note">{{ season.note }}</div>
-        </div>
-      </div>
-      {% endif %}
     </div>
 
-    <p style="font-size:0.85rem; color: var(--ink-soft); margin: 4px 0 18px;">
-      💡 Mỗi mục có 3 gợi ý — bấm chọn 1 lựa chọn bạn thích, tổng chi phí bên dưới sẽ tự cập nhật theo đúng lựa chọn của bạn.
-    </p>
-    <p style="font-size:0.8rem; color: var(--ink-soft); margin: -8px 0 18px; font-style: italic;">
-      ⚠️ Giá cả trong lịch trình chỉ mang tính chất tham khảo tại thời điểm khảo sát, có thể thay đổi theo thời gian, mùa vụ hoặc chính sách của từng nơi. Bạn nên kiểm tra lại giá trước khi đặt chỗ hoặc sử dụng dịch vụ.
-    </p>
-
-    <div class="budget-banner ok" id="budget-banner-box">
-      <div class="emoji" id="budget-banner-emoji">✅</div>
-      <div>
-        <h3 id="budget-banner-title">Đang tính toán...</h3>
-        <p id="budget-banner-desc"></p>
-      </div>
-    </div>
-
-    <!-- ================= AI ADVISOR ================= -->
-    <div class="ai-advice-box">
+    <!-- Lời khuyên AI gọn gàng -->
+    <div class="ai-advice-box" style="margin-bottom: 20px;">
       <div class="ai-advice-badge">🤖 Lời khuyên từ AI</div>
-      <p>{{ ai_advice }}</p>
+      <p style="font-size: 0.95rem; line-height: 1.5; margin: 0;">{{ ai_advice }}</p>
     </div>
 
-    {% if ai_driven and allocation_pct %}
-    <div class="ai-advice-box">
-      <div class="ai-advice-badge">🤖 AI phân bổ ngân sách</div>
-      <div class="alloc-bars">
-        {% for key, label, icon in [
-          ('hotel', 'Khách sạn', '🏨'),
-          ('food', 'Ăn uống', '🍜'),
-          ('drinks', 'Quán nước', '☕'),
-          ('attraction', 'Tham quan', '🌲'),
-          ('souvenir', 'Quà lưu niệm', '🎁')
-        ] %}
-        <div class="alloc-row">
-          <div class="alloc-label">{{ icon }} {{ label }}</div>
-          <div class="alloc-track"><div class="alloc-fill" style="width: {{ allocation_pct[key] }}%;"></div></div>
-          <div class="alloc-pct">{{ allocation_pct[key] }}%</div>
-        </div>
-        {% endfor %}
-      </div>
-      <p class="ai-driven-note">Tỷ lệ % của phần ngân sách linh hoạt (đã trừ chi phí di chuyển và dự phòng). AI cũng đã chọn ra các địa điểm cụ thể bên dưới phù hợp với ngân sách và hạng mức này.</p>
+    <!-- Hướng dẫn sử dụng nhỏ gọn -->
+    <div style="background: #f7f9f6; padding: 12px 16px; border-radius: 8px; border-left: 4px solid var(--pine-700); margin-bottom: 30px; font-size: 0.85rem; color: var(--ink-soft);">
+      💡 <b>Mẹo nhỏ:</b> Mỗi mục lịch trình có 3 gợi ý — bạn có thể bấm chọn 1 lựa chọn yêu thích, tổng chi phí bên dưới sẽ tự động cập nhật theo ý bạn! *(Lưu ý: Giá mang tính chất tham khảo).*
     </div>
-    {% endif %}
 
     <!-- ================= LICH TRINH ================= -->
     <div class="section-title"><span class="num">1</span> Lịch trình theo ngày</div>
@@ -237,7 +232,6 @@
 
     <!-- ================= BANG CHI PHI ================= -->
     <div class="section-title"><span class="num">5</span> Chi tiết chi phí <span style="font-size:0.7rem; font-weight:500; color: var(--ink-soft);">(tự cập nhật theo lựa chọn)</span></div>
-    <p style="font-size:0.78rem; color: var(--ink-soft); margin: -4px 0 10px; font-style: italic;">*Số liệu ước tính, giá thực tế có thể thay đổi.</p>
     <table class="cost-table">
       <tr><th>Hạng mục</th><th style="text-align:right;">Thành tiền</th></tr>
       {% if plan.hotel_picks %}<tr><td>Khách sạn ({{ rooms }} phòng × {{ nights }} đêm)</td><td class="amount" id="amt-hotel">{{ plan.hotel_cost|vnd }}</td></tr>{% endif %}
@@ -325,12 +319,12 @@
           box.className = 'budget-banner over';
           emoji.textContent = '⚠️';
           title.textContent = 'Bạn đã vượt ngân sách ' + fmtVND(-remaining);
-          desc.textContent = 'Tổng chi phí theo lựa chọn hiện tại là ' + fmtVND(grandTotal) + '. Thử đổi sang lựa chọn giá thấp hơn ở vài mục, hoặc tăng ngân sách để thoải mái hơn.';
+          desc.textContent = 'Tổng chi phí hiện tại là ' + fmtVND(grandTotal) + '.';
         } else {
           box.className = 'budget-banner ok';
           emoji.textContent = '✅';
           title.textContent = 'Trong ngân sách — còn dư ' + fmtVND(remaining);
-          desc.textContent = 'Tổng chi phí theo lựa chọn hiện tại là ' + fmtVND(grandTotal) + '.';
+          desc.textContent = 'Tổng chi phí hiện tại là ' + fmtVND(grandTotal) + '.';
         }
       }
 
@@ -357,7 +351,7 @@
 
     function copyLink() {
         navigator.clipboard.writeText(window.location.href).then(function() {
-            alert("Đã sao chép đường dẫn lịch trình vào bộ nhớ tạm! Bạn có thể dán vào Zalo, Messenger để gửi cho bạn bè.");
+            alert("Đã sao chép đường dẫn lịch trình vào bộ nhớ tạm!");
             closeShareModal();
         }).catch(function(err) {
             alert("Không thể sao chép liên kết.");
@@ -369,7 +363,7 @@
         
         if (platform === 'zalo') {
             navigator.clipboard.writeText("Cùng xem lịch trình du lịch Đà Lạt của mình nhé: " + url).then(function() {
-                alert("Đã sao chép nội dung kèm link! Mở Zalo và dán vào khung chat với bạn bè nhé.");
+                alert("Đã sao chép nội dung kèm link! Mở Zalo và dán vào khung chat với bạn bè.");
                 window.open("https://chat.zalo.me", "_blank");
             });
         } else if (platform === 'facebook') {
