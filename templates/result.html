@@ -5,6 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lịch trình Đà Lạt của bạn – BudgetTrip AI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* CSS cho Modal (Hộp thoại hiện lên khi bấm Chia sẻ) */
+    .share-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+    }
+    .share-modal-content {
+      background: #fff;
+      padding: 30px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    .share-close {
+      position: absolute;
+      top: 12px;
+      right: 18px;
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--ink-soft);
+      cursor: pointer;
+    }
+    .share-btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .share-option-btn {
+      padding: 12px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 {% from '_macros.html' import render_stars, render_option_pills, render_selectable_cards %}
@@ -196,36 +250,45 @@
       <tr class="total"><td>Tổng cộng</td><td class="amount" id="amt-total">{{ plan.total|vnd }}</td></tr>
     </table>
 
-    <!-- ================= CHIA SẺ LỊCH TRÌNH ================= -->
-    <div style="margin: 36px 0 20px; text-align: center; background: #fff; padding: 24px; border-radius: 14px; border: 1px solid var(--line);">
-      <p style="font-weight: 600; margin-bottom: 14px; color: var(--pine-900); font-size: 1.05rem;">📤 Chia sẻ lịch trình này cho bạn bè & người thân:</p>
-      <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
-          
-          <!-- Nút Zalo -->
-          <a id="share-zalo" href="#" target="_blank" style="background: #0068ff; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+    <!-- CÁC NÚT ĐIỀU HƯỚNG DƯỚI CÙNG -->
+    <div class="footer-actions" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+      <a href="{{ url_for('index') }}" class="btn-secondary">← Thử ngân sách khác</a>
+      <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình khác</a>
+      <!-- Nút Chia sẻ kiểu ô vuông nằm cạnh -->
+      <button onclick="openShareModal()" class="btn-secondary" style="cursor: pointer; background: #fff;">📤 Chia sẻ lịch trình</button>
+    </div>
+  </div>
+
+  <!-- HỘP THOẠI POPUP (MODAL) CHIA SẺ -->
+  <div id="shareModal" class="share-modal">
+    <div class="share-modal-content">
+      <span class="share-close" onclick="closeShareModal()">&times;</span>
+      <h3 style="font-family: 'Fraunces', serif; color: var(--pine-900); margin-bottom: 6px;">Chia sẻ lịch trình</h3>
+      <p style="font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 15px;">Chọn hình thức bạn muốn chia sẻ với bạn bè:</p>
+      
+      <div class="share-btn-grid">
+          <!-- Zalo -->
+          <a id="share-zalo" href="#" target="_blank" class="share-option-btn" style="background: #0068ff;">
               💬 Zalo
           </a>
-
-          <!-- Nút Facebook -->
-          <a id="share-fb" href="#" target="_blank" style="background: #1877f2; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+          <!-- Facebook -->
+          <a id="share-fb" href="#" target="_blank" class="share-option-btn" style="background: #1877f2;">
               📘 Facebook
           </a>
-
-          <!-- Nút Messenger -->
-          <a id="share-messenger" href="#" target="_blank" style="background: #0084ff; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+          <!-- Messenger -->
+          <a id="share-messenger" href="#" target="_blank" class="share-option-btn" style="background: #0084ff;">
               💌 Messenger
           </a>
-
-          <!-- Nút Sao chép liên kết -->
-          <button onclick="copyLink()" style="background: var(--pine-700); color: #fff; padding: 10px 18px; border-radius: 8px; border: none; font-size: 0.9rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+          <!-- Sao chép link -->
+          <button onclick="copyLink()" class="share-option-btn" style="background: var(--pine-700);">
               🔗 Sao chép link
           </button>
       </div>
-    </div>
 
-    <div class="footer-actions">
-      <a href="{{ url_for('index') }}" class="btn-secondary">← Thử ngân sách khác</a>
-      <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình khác</a>
+      <!-- Nút In file PDF -->
+      <button onclick="printToPDF()" class="share-option-btn" style="background: #e8a33d; width: 100%; margin-top: 12px; justify-content: center;">
+          🖨️ Lưu hoặc In file PDF
+      </button>
     </div>
   </div>
 
@@ -287,34 +350,50 @@
       recalc();
     })();
 
-    // Xử lý liên kết chia sẻ mạng xã hội
-    (function() {
+    // Xử lý bật/tắt bảng chọn Chia sẻ (Modal)
+    function openShareModal() {
+        document.getElementById('shareModal').style.display = 'flex';
+        
+        // Gắn link động khi mở modal
         var currentUrl = encodeURIComponent(window.location.href);
         var shareTitle = encodeURIComponent("Lịch trình du lịch Đà Lạt tuyệt vời của mình!");
 
         var fbBtn = document.getElementById('share-fb');
-        if(fbBtn) {
-            fbBtn.href = "https://www.facebook.com/sharer/sharer.php?u=" + currentUrl;
-        }
+        if(fbBtn) fbBtn.href = "https://www.facebook.com/sharer/sharer.php?u=" + currentUrl;
 
         var zaloBtn = document.getElementById('share-zalo');
-        if(zaloBtn) {
-            zaloBtn.href = "https://share.zalo.me/?url=" + currentUrl + "&title=" + shareTitle;
-        }
+        if(zaloBtn) zaloBtn.href = "https://share.zalo.me/?url=" + currentUrl + "&title=" + shareTitle;
 
         var msgBtn = document.getElementById('share-messenger');
-        if(msgBtn) {
-            msgBtn.href = "https://www.facebook.com/dialog/send?link=" + currentUrl + "&app_id=291494419107518&redirect_uri=" + currentUrl;
-        }
-    })();
+        if(msgBtn) msgBtn.href = "https://www.facebook.com/dialog/send?link=" + currentUrl + "&app_id=291494419107518&redirect_uri=" + currentUrl;
+    }
 
-    // Hàm sao chép liên kết vào clipboard
+    function closeShareModal() {
+        document.getElementById('shareModal').style.display = 'none';
+    }
+
+    // Đóng modal khi bấm ra ngoài vùng nội dung trắng
+    window.onclick = function(event) {
+        var modal = document.getElementById('shareModal');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    // Hàm sao chép liên kết
     function copyLink() {
         navigator.clipboard.writeText(window.location.href).then(function() {
             alert("Đã sao chép đường dẫn lịch trình! Bạn có thể dán vào bất cứ đâu để gửi cho bạn bè.");
+            closeShareModal();
         }, function(err) {
             alert("Không thể sao chép liên kết.");
         });
+    }
+
+    // Hàm In ra file PDF
+    function printToPDF() {
+        closeShareModal();
+        window.print();
     }
   </script>
 </body>
