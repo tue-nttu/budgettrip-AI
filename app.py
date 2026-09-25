@@ -32,7 +32,7 @@ def maps_link(address):
 
 @app.template_filter("urlize_address")
 def urlize_address(text):
-    """Tách link Google Maps ra khỏi chuỗi, biến chữ địa chỉ thành link trực tiếp, không hiển thị chữ thừa."""
+    """Biến toàn bộ dòng địa chỉ thành link Google Maps, không hiện chữ Xem bản đồ."""
     if not text:
         return ""
     
@@ -41,12 +41,12 @@ def urlize_address(text):
     
     if url_match:
         url = url_match.group(1)
-        # Lấy phần văn bản đứng trước link làm địa chỉ hiển thị
+        # Lấy phần văn bản đứng trước link làm địa chỉ hiển thị chính
         address_only = text.replace(url, "").strip()
         address_only = address_only.rstrip(",").strip()
         
-        # Chỉ bọc link vào phần chữ địa chỉ, thêm icon ghim bản đồ phía trước
-        return f'<a href="{url}" target="_blank" style="color: inherit; text-decoration: none;" title="Nhấn để mở Google Maps">📍 <span style="text-decoration: underline; color: #1f3a2e;">{address_only}</span></a>'
+        # Bọc toàn bộ vào thẻ a, khi rê chuột vào sẽ đổi màu nhẹ để người dùng biết là bấm được
+        return f'<a href="{url}" target="_blank" style="color: #1f3a2e; text-decoration: underline; font-weight: 500;" title="Nhấn để mở Google Maps">📍 {address_only}</a>'
     else:
         return f"📍 {text}"
 
