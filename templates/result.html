@@ -196,6 +196,33 @@
       <tr class="total"><td>Tổng cộng</td><td class="amount" id="amt-total">{{ plan.total|vnd }}</td></tr>
     </table>
 
+    <!-- ================= CHIA SẺ LỊCH TRÌNH ================= -->
+    <div style="margin: 36px 0 20px; text-align: center; background: #fff; padding: 24px; border-radius: 14px; border: 1px solid var(--line);">
+      <p style="font-weight: 600; margin-bottom: 14px; color: var(--pine-900); font-size: 1.05rem;">📤 Chia sẻ lịch trình này cho bạn bè & người thân:</p>
+      <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+          
+          <!-- Nút Zalo -->
+          <a id="share-zalo" href="#" target="_blank" style="background: #0068ff; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+              💬 Zalo
+          </a>
+
+          <!-- Nút Facebook -->
+          <a id="share-fb" href="#" target="_blank" style="background: #1877f2; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+              📘 Facebook
+          </a>
+
+          <!-- Nút Messenger -->
+          <a id="share-messenger" href="#" target="_blank" style="background: #0084ff; color: #fff; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500; display: inline-flex; align-items: center; gap: 6px;">
+              💌 Messenger
+          </a>
+
+          <!-- Nút Sao chép liên kết -->
+          <button onclick="copyLink()" style="background: var(--pine-700); color: #fff; padding: 10px 18px; border-radius: 8px; border: none; font-size: 0.9rem; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              🔗 Sao chép link
+          </button>
+      </div>
+    </div>
+
     <div class="footer-actions">
       <a href="{{ url_for('index') }}" class="btn-secondary">← Thử ngân sách khác</a>
       <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình khác</a>
@@ -259,6 +286,36 @@
       });
       recalc();
     })();
+
+    // Xử lý liên kết chia sẻ mạng xã hội
+    (function() {
+        var currentUrl = encodeURIComponent(window.location.href);
+        var shareTitle = encodeURIComponent("Lịch trình du lịch Đà Lạt tuyệt vời của mình!");
+
+        var fbBtn = document.getElementById('share-fb');
+        if(fbBtn) {
+            fbBtn.href = "https://www.facebook.com/sharer/sharer.php?u=" + currentUrl;
+        }
+
+        var zaloBtn = document.getElementById('share-zalo');
+        if(zaloBtn) {
+            zaloBtn.href = "https://share.zalo.me/?url=" + currentUrl + "&title=" + shareTitle;
+        }
+
+        var msgBtn = document.getElementById('share-messenger');
+        if(msgBtn) {
+            msgBtn.href = "https://www.facebook.com/dialog/send?link=" + currentUrl + "&app_id=291494419107518&redirect_uri=" + currentUrl;
+        }
+    })();
+
+    // Hàm sao chép liên kết vào clipboard
+    function copyLink() {
+        navigator.clipboard.writeText(window.location.href).then(function() {
+            alert("Đã sao chép đường dẫn lịch trình! Bạn có thể dán vào bất cứ đâu để gửi cho bạn bè.");
+        }, function(err) {
+            alert("Không thể sao chép liên kết.");
+        });
+    }
   </script>
 </body>
 </html>
