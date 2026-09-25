@@ -24,7 +24,7 @@
       {% if loop.first %}<span class="pill-badge">Gợi ý chính</span>{% endif %}
       <span class="pill-name">{{ p.name }}</span>
       <span class="pill-price">{% if p.price > 0 %}{{ p.price|vnd }}{% else %}Miễn phí{% endif %}</span>
-      {% if p.address %}<span class="pill-address">📍 {{ p.address }}</span>{% endif %}
+      {% if p.address %}<span class="pill-address">📍 {{ p.address | urlize_address | safe }}</span>{% endif %}
     </label>
     {% endfor %}
   </div>
@@ -43,7 +43,7 @@
       <h4>{{ it.name }}</h4>
       {% if it.premium_stars %}<p class="meta">🏅 Hạng {{ it.premium_stars }} sao</p>{% endif %}
       {{ render_stars(it.rating) }}
-      <p class="meta">📍 {{ it.address }}</p>
+      <p class="meta">📍 {{ it.address | urlize_address | safe }}</p>
       <p class="desc">{{ it.description }}</p>
       <div class="price">{{ it.price|vnd }} <span class="unit">/ {{ it.unit }}</span></div>
     </label>
@@ -86,7 +86,7 @@
     <div class="icon-badge">{{ item.icon }}</div>
     <h4>{{ item.name }}</h4>
     {{ render_stars(item.rating) }}
-    {% if item.address %}<p class="meta">📍 {{ item.address }}</p>{% endif %}
+    {% if item.address %}<p class="meta">📍 {{ item.address | urlize_address | safe }}</p>{% endif %}
     {% if item.hours %}<p class="meta">🕒 {{ item.hours }}</p>{% endif %}
     <p class="desc">{{ item.description }}</p>
     <div class="price">{% if item.price > 0 %}{{ item.price|vnd }}{% else %}Miễn phí{% endif %} <span class="unit">/ {{ item.unit }}</span></div>
