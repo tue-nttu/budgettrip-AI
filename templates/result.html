@@ -411,28 +411,26 @@
     function downloadPDF() {
         closeShareModal();
         
-        // Chọn toàn bộ phần body hoặc container chính
-        var element = document.body; 
+        // Chỉ định rõ vùng nội dung cần xuất PDF (không chụp thừa khoảng trắng của body)
+        var element = document.getElementById('pdf-content'); 
         
         var opt = {
-          margin:       10,
+          margin:       5, // Giảm lề để nội dung hiển thị cân đối
           filename:     'Lich-trinh-du-lich-Da-Lat.pdf',
           image:        { type: 'jpeg', quality: 0.98 },
           html2canvas:  { 
-              scale: 2, 
+              scale: 1.5, // Giữ tỉ lệ vừa phải để tránh bị phình to ra nhiều trang
               useCORS: true, 
               letterRendering: true,
-              backgroundColor: '#ffffff' // Ép nền trắng để không bị lỗi trong suốt
+              backgroundColor: '#ffffff'
           },
           jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        alert("Hệ thống đang tạo file PDF, bạn vui lòng đợi 2-3 giây nhé!");
+        alert("Hệ thống đang tạo file PDF từ trang 1, bạn vui lòng đợi 2 giây nhé!");
 
         // Tiến hành render và tải file về máy
-        html2pdf().from(element).set(opt).save().then(function () {
-            console.log("Đã tải PDF thành công!");
-        });
+        html2pdf().from(element).set(opt).save();
     }
   </script>
 </body>
