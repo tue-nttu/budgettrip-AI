@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lịch trình Đà Lạt của bạn – BudgetTrip AI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <!-- Thư viện hỗ trợ tải PDF trực tiếp trên mọi thiết bị (kể cả điện thoại) -->
+  
+  <!-- Thư viện hỗ trợ tải PDF trực tiếp -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
     /* CSS cho Modal Chia sẻ */
     .share-modal {
@@ -61,13 +63,10 @@
       cursor: pointer;
     }
 
-    /* CSS tối ưu khi In hoặc Lưu file PDF (Ẩn các nút điều hướng thừa) */
+    /* Ẩn các nút điều hướng và modal khi xuất PDF */
     @media print {
-      .footer-actions, .navbar, .share-modal, button {
+      .footer-actions, .share-modal, button {
         display: none !important;
-      }
-      body {
-        background: #fff !important;
       }
     }
   </style>
@@ -75,18 +74,14 @@
 <body>
 {% from '_macros.html' import render_stars, render_option_pills, render_selectable_cards %}
 
+  <!-- Thanh Navbar giữ nguyên cấu trúc chuẩn -->
   <nav class="navbar" style="background: var(--pine-700);">
     <div class="brand">Budget<span class="dot">Trip</span> AI</div>
     <a href="{{ url_for('index') }}" style="color:#fff; font-size:0.9rem; text-decoration:none;">← Lập kế hoạch khác</a>
   </nav>
 
-  <!-- Vùng nội dung sẽ được xuất ra file PDF -->
-<div id="pdf-content">
-  <div class="container" style="padding-top: 36px;">
-    <!-- Toàn bộ nội dung lịch trình, bảng chi phí nằm ở đây -->
-    ...
-  </div>
-</div>
+  <!-- Vùng chứa nội dung (Container giữ nguyên giúp trang web có lề trái phải chuẩn chỉnh) -->
+  <div class="container" id="pdf-container" style="padding-top: 36px;">
 
     <h1 style="font-size:1.8rem; margin-bottom: 6px;">Lịch trình Đà Lạt gợi ý cho bạn</h1>
     <p style="color: var(--ink-soft); margin-bottom: 26px;">
@@ -269,7 +264,7 @@
     </table>
 
     <!-- CÁC NÚT ĐIỀU HƯỚNG DƯỚI CÙNG -->
-    <div class="footer-actions" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+    <div class="footer-actions" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-top: 30px;">
       <a href="{{ url_for('index') }}" class="btn-secondary">← Thử ngân sách khác</a>
       <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình khác</a>
       <button onclick="openShareModal()" class="btn-secondary" style="cursor: pointer; background: #fff;">📤 Chia sẻ lịch trình</button>
@@ -299,7 +294,7 @@
       </div>
 
       <button onclick="downloadPDF()" class="share-option-btn" style="background: #e8a33d; width: 100%; margin-top: 12px; justify-content: center;">
-          📥 Tải xuống / In file PDF
+          📥 Tải xuống file PDF
       </button>
     </div>
   </div>
@@ -408,18 +403,18 @@
         closeShareModal();
     }
 
+    // Hàm xuất PDF tập trung đúng vào vùng #pdf-container bắt đầu từ trang 1
     function downloadPDF() {
         closeShareModal();
         
-        // Chỉ định rõ vùng nội dung cần xuất PDF (không chụp thừa khoảng trắng của body)
-        var element = document.getElementById('pdf-content'); 
+        var element = document.getElementById('pdf-container');
         
         var opt = {
-          margin:       5, // Giảm lề để nội dung hiển thị cân đối
+          margin:       5,
           filename:     'Lich-trinh-du-lich-Da-Lat.pdf',
           image:        { type: 'jpeg', quality: 0.98 },
           html2canvas:  { 
-              scale: 1.5, // Giữ tỉ lệ vừa phải để tránh bị phình to ra nhiều trang
+              scale: 1.5, 
               useCORS: true, 
               letterRendering: true,
               backgroundColor: '#ffffff'
@@ -429,7 +424,6 @@
 
         alert("Hệ thống đang tạo file PDF từ trang 1, bạn vui lòng đợi 2 giây nhé!");
 
-        // Tiến hành render và tải file về máy
         html2pdf().from(element).set(opt).save();
     }
   </script>
