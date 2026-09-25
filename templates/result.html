@@ -6,7 +6,7 @@
   <title>Lịch trình Đà Lạt của bạn – BudgetTrip AI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
-    /* CSS cho Modal (Hộp thoại hiện lên khi bấm Chia sẻ) */
+    /* CSS cho Modal Chia sẻ */
     .share-modal {
       display: none;
       position: fixed;
@@ -57,6 +57,16 @@
       gap: 8px;
       border: none;
       cursor: pointer;
+    }
+
+    /* CSS tối ưu khi In hoặc Lưu file PDF (Ẩn các nút điều hướng thừa) */
+    @media print {
+      .footer-actions, .navbar, .share-modal, button {
+        display: none !important;
+      }
+      body {
+        background: #fff !important;
+      }
     }
   </style>
 </head>
@@ -281,7 +291,7 @@
       </div>
 
       <button onclick="downloadPDF()" class="share-option-btn" style="background: #e8a33d; width: 100%; margin-top: 12px; justify-content: center;">
-          📥 Tải xuống file PDF
+          📥 Tải xuống / In file PDF
       </button>
     </div>
   </div>
@@ -363,25 +373,27 @@
         navigator.clipboard.writeText(window.location.href).then(function() {
             alert("Đã sao chép đường dẫn lịch trình vào bộ nhớ tạm! Bạn có thể dán vào Zalo, Messenger để gửi cho bạn bè.");
             closeShareModal();
-        }, function(err) {
+        }).catch(function(err) {
             alert("Không thể sao chép liên kết.");
         });
     }
 
     function shareToSocial(platform) {
         var url = window.location.href;
-        var text = "Cùng xem lịch trình du lịch Đà Lạt tuyệt vời của mình nhé: " + url;
         
         if (platform === 'zalo') {
-            navigator.clipboard.writeText(text).then(function() {
+            navigator.clipboard.writeText("Cùng xem lịch trình du lịch Đà Lạt của mình nhé: " + url).then(function() {
                 alert("Đã sao chép nội dung kèm link! Mở Zalo và dán vào khung chat với bạn bè nhé.");
                 window.open("https://chat.zalo.me", "_blank");
             });
         } else if (platform === 'facebook') {
-            window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank");
+            navigator.clipboard.writeText(url).then(function() {
+                alert("Đã sao chép link lịch trình! Mở Facebook và dán vào bài viết hoặc tin nhắn.");
+                window.open("https://www.facebook.com", "_blank");
+            });
         } else if (platform === 'messenger') {
             navigator.clipboard.writeText(url).then(function() {
-                alert("Đã sao chép link lịch trình! Hãy dán vào khung chat Messenger để gửi.");
+                alert("Đã sao chép link lịch trình! Mở Messenger và dán vào khung chat với bạn bè.");
                 window.open("https://www.messenger.com", "_blank");
             });
         }
