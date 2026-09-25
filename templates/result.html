@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lịch trình Đà Lạt của bạn – BudgetTrip AI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  
-  <!-- Thư viện hỗ trợ tải PDF trực tiếp -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
   <style>
     /* CSS cho Modal Chia sẻ */
     .share-modal {
@@ -62,26 +58,17 @@
       border: none;
       cursor: pointer;
     }
-
-    /* Ẩn các nút điều hướng và modal khi xuất PDF */
-    @media print {
-      .footer-actions, .share-modal, button {
-        display: none !important;
-      }
-    }
   </style>
 </head>
 <body>
 {% from '_macros.html' import render_stars, render_option_pills, render_selectable_cards %}
 
-  <!-- Thanh Navbar giữ nguyên cấu trúc chuẩn -->
   <nav class="navbar" style="background: var(--pine-700);">
     <div class="brand">Budget<span class="dot">Trip</span> AI</div>
     <a href="{{ url_for('index') }}" style="color:#fff; font-size:0.9rem; text-decoration:none;">← Lập kế hoạch khác</a>
   </nav>
 
-  <!-- Vùng chứa nội dung (Container giữ nguyên giúp trang web có lề trái phải chuẩn chỉnh) -->
-  <div class="container" id="pdf-container" style="padding-top: 36px;">
+  <div class="container" style="padding-top: 36px;">
 
     <h1 style="font-size:1.8rem; margin-bottom: 6px;">Lịch trình Đà Lạt gợi ý cho bạn</h1>
     <p style="color: var(--ink-soft); margin-bottom: 26px;">
@@ -278,7 +265,7 @@
       <h3 style="font-family: 'Fraunces', serif; color: var(--pine-900); margin-bottom: 6px;">Chia sẻ lịch trình</h3>
       <p style="font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 15px;">Chọn phương thức chia sẻ nhanh:</p>
       
-      <div class="share-btn-grid">
+      <div class="share-btn-grid" style="grid-template-columns: 1fr 1fr;">
           <button onclick="shareToSocial('zalo')" class="share-option-btn" style="background: #0068ff;">
               💬 Zalo
           </button>
@@ -292,10 +279,6 @@
               🔗 Sao chép link
           </button>
       </div>
-
-      <button onclick="downloadPDF()" class="share-option-btn" style="background: #e8a33d; width: 100%; margin-top: 12px; justify-content: center;">
-          📥 Tải xuống file PDF
-      </button>
     </div>
   </div>
 
@@ -401,30 +384,6 @@
             });
         }
         closeShareModal();
-    }
-
-    // Hàm xuất PDF tập trung đúng vào vùng #pdf-container bắt đầu từ trang 1
-    function downloadPDF() {
-        closeShareModal();
-        
-        var element = document.getElementById('pdf-container');
-        
-        var opt = {
-          margin:       5,
-          filename:     'Lich-trinh-du-lich-Da-Lat.pdf',
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { 
-              scale: 1.5, 
-              useCORS: true, 
-              letterRendering: true,
-              backgroundColor: '#ffffff'
-          },
-          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        alert("Hệ thống đang tạo file PDF từ trang 1, bạn vui lòng đợi 2 giây nhé!");
-
-        html2pdf().from(element).set(opt).save();
     }
   </script>
 </body>
