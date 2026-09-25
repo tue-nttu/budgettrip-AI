@@ -30,6 +30,15 @@ def maps_link(address):
     return "https://www.google.com/maps/search/?api=1&query=" + quote(address)
 
 
+@app.template_filter("urlize_address")
+def urlize_address(text):
+    """Tự động tìm link trong chuỗi địa chỉ và biến thành thẻ <a> có thể bấm được."""
+    if not text:
+        return ""
+    url_pattern = re.compile(r'(https?://[^\s]+)')
+    return url_pattern.sub(r'<br><a href="\1" target="_blank" style="color: #007bff; text-decoration: underline; font-weight: 500;">📍 Xem vị trí trên Google Maps</a>', text)
+
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 TIERS = ["binh_dan", "tieu_chuan", "cao_cap"]
@@ -53,7 +62,6 @@ CATEGORY_ICONS = {
     "souvenir": "🎁",
 }
 
-# 5 loai hinh luu tru rieng - moi loai 1 file CSV, gop lai thanh 1 pool "hotel" chung
 STAY_TYPES = {
     "khach_san": {"label": "Khách sạn", "icon": "🏨", "file": "hotels_khach_san.csv"},
     "villa": {"label": "Villa", "icon": "🏡", "file": "hotels_villa.csv"},
@@ -62,11 +70,8 @@ STAY_TYPES = {
     "can_ho": {"label": "Căn hộ", "icon": "🏢", "file": "hotels_can_ho.csv"},
 }
 
-# So "sao cao cap" (khong phai danh gia nguoi dung) toi thieu de duoc uu tien
-# theo tung hang gia - hang gia cang cao thi cang uu tien khach san nhieu sao.
 TIER_MIN_STARS = {"binh_dan": 0, "tieu_chuan": 3, "cao_cap": 4}
 
-# Tu khoa nhan dien mon "vat" (an vat/trang mieng) - dung lam pool rieng cho "an vat buoi toi"
 SNACK_KEYWORDS = [
     "bánh tráng nướng", "cà rem", "kem", "bánh su kem", "xôi xoài",
     "bông lan trứng nướng", "mochi", "cafe", "cà phê", "trà", "chè",
@@ -80,7 +85,6 @@ def is_main_dish(name):
 
 
 def dish_type(name):
-    """Xac dinh 'loai mon' cua 1 mon an vat (vd: banh trang nuong, kem, tra...)."""
     n = name.lower()
     for kw in SNACK_KEYWORDS:
         if kw in n:
@@ -89,16 +93,6 @@ def dish_type(name):
 
 
 def pick_snack(pool, tier, k=3, used_types=None):
-    """
-    Cho 1 ngay: chon MOT loai mon an vat (vd banh trang nuong) - uu tien loai
-    CHUA dung o cac ngay truoc do - roi lay k quan KHAC NHAU cung ban loai
-    mon do. Ngay hom sau se uu tien loai mon khac, tranh viec ngay nao cung
-    lap lai dung 1 loai (vd banh trang nuong) nhu nhau.
-
-    Luu y: do an vat gia deu thap va it chenh lech nhau, nen o day KHONG loc
-    theo tier truoc - de toi da so luong quan cung 1 loai mon co the chon
-    (vd du 5 quan banh trang nuong deu nam trong cung 1 hang gia).
-    """
     used_types = used_types or set()
     if not pool:
         return []
@@ -114,8 +108,6 @@ def pick_snack(pool, tier, k=3, used_types=None):
     random.shuffle(types_list)
     unused_types = [t for t in types_list if t not in used_types]
 
-    # Uu tien loai CHUA dung va co du k quan; neu khong co, chon loai chua
-    # dung bat ky; het loai moi thi danh phai chon lai loai da dung.
     full_unused = [t for t in unused_types if len(by_type[t]) >= k]
     if full_unused:
         chosen_type = random.choice(full_unused)
@@ -133,24 +125,18 @@ def pick_snack(pool, tier, k=3, used_types=None):
         picked_names = {p["name"] for p in picks}
         remaining_pool = [p for p in pool if p["name"] not in picked_names]
         random.shuffle(remaining_pool)
-        # Bu cho trong: uu tien loai CHUA dung o ngay truoc, tranh de loai
-        # vua chon lai (chosen_type) hoac loai da dung roi len vao lan nua.
         remaining_pool.sort(key=lambda p: (p["_dish_type"] in used_types))
         picks += remaining_pool[: k - len(picks)]
 
     picks.sort(key=lambda x: (x.get("rating") or 0), reverse=True)
     return picks
 
+
 NUM_RE = re.compile(r"\d{1,3}(?:\.\d{3})+|\d+")
-TAXI_KM_PER_DAY = 25  # uoc tinh so km di chuyen trung binh moi ngay cho khach du lich
+TAXI_KM_PER_DAY = 25
 
-
-# ---------------------------------------------------------------------------
-# Ham chuan hoa du lieu tho tu Google Sheet (gia + danh gia format khong dong nhat)
-# ---------------------------------------------------------------------------
 
 def parse_price(text):
-    """'70.000 VNĐ' -> 70000 | '20.000 - 100.000 VNĐ' -> 60000 (trung binh) | 'Miễn phí' -> 0"""
     if not text:
         return 0
     t = text.strip()
@@ -164,7 +150,6 @@ def parse_price(text):
 
 
 def parse_money(raw):
-    """'6.000.000' hoac '6000000' -> 6000000 (int). Chuoi rong -> 0."""
     if raw is None:
         return 0
     digits = re.sub(r"[^\d]", "", str(raw))
@@ -172,49 +157,32 @@ def parse_money(raw):
 
 
 SEASON_INFO = {
-    # Da Lat: mua kho (le hoi hoa, Tet, cao diem) ~ thang 12-3
-    12: {"name": "Mùa khô – cao điểm lễ hội & Tết",
-         "note": "Trời khô ráo, se lạnh về đêm (10-18°C), rất đẹp để chụp ảnh nhưng cũng là mùa cao điểm nên giá phòng, dịch vụ thường tăng — nên đặt phòng trước."},
-    1: {"name": "Mùa khô – cao điểm lễ hội & Tết",
-        "note": "Trời khô ráo, se lạnh về đêm (10-18°C), rất đẹp để chụp ảnh nhưng cũng là mùa cao điểm nên giá phòng, dịch vụ thường tăng — nên đặt phòng trước."},
-    2: {"name": "Mùa khô – cao điểm Tết",
-        "note": "Thời điểm Tết Nguyên đán, giá phòng và dịch vụ có thể tăng mạnh, nơi tham quan rất đông — nên đặt phòng và lên lịch trình sớm."},
-    3: {"name": "Cuối mùa khô",
-        "note": "Vẫn còn nắng ráo, ít mưa, thích hợp cho các hoạt động ngoài trời, giá cả bắt đầu hạ nhiệt so với dịp Tết."},
-    4: {"name": "Giao mùa",
-        "note": "Thời tiết dễ chịu, nắng nhẹ xen ít mưa giông cuối ngày, giá dịch vụ ở mức trung bình."},
-    5: {"name": "Đầu mùa mưa",
-        "note": "Bắt đầu có mưa giông vào buổi chiều, nên mang theo áo mưa/ô, buổi sáng vẫn thường nắng đẹp."},
-    6: {"name": "Mùa mưa",
-        "note": "Mưa nhiều vào chiều tối, nên sắp lịch tham quan ngoài trời vào buổi sáng, mang áo mưa gọn nhẹ."},
-    7: {"name": "Mùa mưa",
-        "note": "Mưa nhiều vào chiều tối, nên sắp lịch tham quan ngoài trời vào buổi sáng, mang áo mưa gọn nhẹ."},
-    8: {"name": "Mùa mưa",
-        "note": "Mưa nhiều vào chiều tối, nên sắp lịch tham quan ngoài trời vào buổi sáng, mang áo mưa gọn nhẹ."},
-    9: {"name": "Mùa mưa",
-        "note": "Mưa nhiều vào chiều tối, nên sắp lịch tham quan ngoài trời vào buổi sáng, mang áo mưa gọn nhẹ."},
-    10: {"name": "Cuối mùa mưa",
-         "note": "Mưa giảm dần, cây cối xanh tươi sau mưa, giá dịch vụ thường mềm hơn mùa cao điểm."},
-    11: {"name": "Giao mùa – bắt đầu se lạnh",
-         "note": "Mưa giảm hẳn, trời bắt đầu se lạnh về đêm, là thời điểm khá lý tưởng và giá còn hợp lý trước khi vào cao điểm."},
+    12: {"name": "Mùa khô – cao điểm lễ hội & Tết", "note": "Trời khô ráo, se lạnh về đêm."},
+    1: {"name": "Mùa khô – cao điểm lễ hội & Tết", "note": "Trời khô ráo, se lạnh về đêm."},
+    2: {"name": "Mùa khô – cao điểm Tết", "note": "Thời điểm Tết Nguyên đán, giá phòng tăng mạnh."},
+    3: {"name": "Cuối mùa khô", "note": "Nắng ráo, ít mưa, thích hợp hoạt động ngoài trời."},
+    4: {"name": "Giao mùa", "note": "Thời tiết dễ chịu, nắng nhẹ xen ít mưa giông."},
+    5: {"name": "Đầu mùa mưa", "note": "Bắt đầu có mưa giông vào chiều."},
+    6: {"name": "Mùa mưa", "note": "Mưa nhiều vào chiều tối."},
+    7: {"name": "Mùa mưa", "note": "Mưa nhiều vào chiều tối."},
+    8: {"name": "Mùa mưa", "note": "Mưa nhiều vào chiều tối."},
+    9: {"name": "Mùa mưa", "note": "Mưa nhiều vào chiều tối."},
+    10: {"name": "Cuối mùa mưa", "note": "Mưa giảm dần, cây cối xanh tươi."},
+    11: {"name": "Giao mùa – bắt đầu se lạnh", "note": "Mưa giảm hẳn, trời se lạnh về đêm."},
 }
 
 
 def season_info(month):
     return SEASON_INFO.get(month, {"name": "Không xác định", "note": ""})
 
+
 def parse_premium_stars(text):
-    """
-    Dem so 'sao cao cap' (hang sang trong cua co so luu tru, KHONG PHAI diem
-    danh gia cua khach). Vd: '⭐️⭐️⭐️⭐️⭐️' -> 5.
-    """
     if not text:
         return 0
     return text.count("⭐")
 
 
 def parse_rating(text):
-    """'4,3' | '4.1⭐️' | '⭐ 4.6' | '4.9' | '—' -> float hoac None"""
     if not text:
         return None
     t = text.strip()
@@ -232,7 +200,6 @@ def parse_rating(text):
 
 
 def assign_tiers(items):
-    """Chia hang muc binh dan/tieu chuan/cao cap dua tren tam phan vi gia (tercile)."""
     priced = sorted([it for it in items if it["price"] > 0], key=lambda x: x["price"])
     n = len(priced)
     third = max(1, math.ceil(n / 3))
@@ -256,7 +223,6 @@ def load_csv(filename):
 
 
 def build_hotels():
-    """Gop 5 loai hinh luu tru tu 5 file CSV rieng thanh 1 pool "hotel" chung."""
     items = []
     next_id = 0
     for stay_key, meta in STAY_TYPES.items():
@@ -355,8 +321,8 @@ def build_souvenirs():
         })
     return assign_tiers(items)
 
+
 def parse_providers(text, limit=3):
-    """Tach chuoi tho thanh danh sach tung don vi rieng {name, phone, address}."""
     if not text:
         return []
     normalized = text
@@ -385,11 +351,12 @@ def parse_providers(text, limit=3):
         entries.append(current)
     return entries[:limit] if limit else entries
 
+
 def build_transport():
     items = [{
         "key": "di_bo", "name": "Đi bộ", "icon": "🚶",
         "price_per_day": 0, "unit": "Miễn phí",
-        "note": "Phù hợp khi các điểm ở gần trung tâm, đi lại trong bán kính ngắn.",
+        "note": "Phù hợp khi các điểm ở gần trung tâm.",
         "documents": "", "providers": "",
     }]
     car_documents, car_providers = "", ""
@@ -418,14 +385,14 @@ def build_transport():
     items.append({
         "key": "oto4", "name": "Ô tô 4 chỗ tự lái", "icon": "🚗",
         "price_per_day": (850_000 + 950_000) // 2,
-        "unit": "850.000 – 950.000 VNĐ/ngày (tối đa 4 người/xe)",
+        "unit": "850.000 – 950.000 VNĐ/ngày",
         "note": "850.000 – 950.000 VNĐ/ngày",
         "documents": car_documents, "providers": car_providers,
     })
     items.append({
         "key": "oto7", "name": "Ô tô 7 chỗ tự lái", "icon": "🚙",
         "price_per_day": (950_000 + 1_250_000) // 2,
-        "unit": "950.000 – 1.250.000 VNĐ/ngày (tối đa 7 người/xe)",
+        "unit": "950.000 – 1.250.000 VNĐ/ngày",
         "note": "950.000 – 1.250.000 VNĐ/ngày",
         "documents": car_documents, "providers": car_providers,
     })
@@ -435,13 +402,11 @@ def build_transport():
 
 
 def build_main_food_pool(food_items):
-    """Danh sach mon an CHINH (khong tinh do an vat), tinh lai hang muc gia rieng cho nhom nay."""
     main_items = [dict(f) for f in food_items if f.get("is_main")]
     return assign_tiers(main_items)
 
 
 def build_snack_pool(food_items):
-    """Danh sach do an vat / do nuong - dung cho goi y 'an vat buoi toi' kieu cho dem Da Lat."""
     snack_items = [dict(f) for f in food_items if not f.get("is_main")]
     return assign_tiers(snack_items)
 
@@ -459,10 +424,6 @@ def load_all_places():
     }
 
 
-# ---------------------------------------------------------------------------
-# Thuat toan lap lich trinh
-# ---------------------------------------------------------------------------
-
 def pick_tier_by_budget(budget_per_person_per_day):
     if budget_per_person_per_day >= 2_000_000:
         return "cao_cap"
@@ -472,11 +433,6 @@ def pick_tier_by_budget(budget_per_person_per_day):
 
 
 def pick_random(pool, tier, k=3, used=None):
-    """
-    Chon ngau nhien k lua chon cung hang muc gia (tier), uu tien cac dia diem
-    CHUA duoc dung trong chuyen di (de tang da dang giua cac ngay).
-    Neu pool khong du dia diem moi thi cho phep lap lai (tranh loi khi du lieu it).
-    """
     used = used or set()
     filtered = [p for p in pool if p.get("tier") == tier]
     source = filtered if len(filtered) >= k else pool
@@ -488,7 +444,6 @@ def pick_random(pool, tier, k=3, used=None):
     if k == 0:
         return []
     picks = random.sample(chosen_pool, k)
-    # Dia diem xep hang cao nhat (rating) hien len truoc lam "Goi y chinh"
     picks.sort(key=lambda x: (x.get("rating") or 0), reverse=True)
     return picks
 
@@ -511,10 +466,6 @@ def pick_hotels(pool, tier, k=3):
 
 
 def pick_souvenirs(pool, tier, k=3):
-    """
-    Nhu pick_random, nhung LUON dam bao 'Cho Da Lat' co mat trong goi y
-    (dia diem quen thuoc, hau nhu ai cung ghe khi mua qua luu niem).
-    """
     market = next((p for p in pool if "chợ đà lạt" in p["name"].lower()), None)
     if not market:
         return pick_random(pool, tier, k)
@@ -544,16 +495,11 @@ def transport_cost_for(transport_items, transport_key, people, days):
     return cost, item, qty
 
 
-# ---------------------------------------------------------------------------
-# Ho tro giao tiep voi AI: nen du lieu gui di, chon loc + kiem tra du lieu AI tra ve
-# ---------------------------------------------------------------------------
-
 DEFAULT_ALLOCATION_PCT = {"hotel": 30, "food": 30, "drinks": 10, "attraction": 20, "souvenir": 10}
 MIN_POOL_SIZE = {"hotel": 3, "main_food": 9, "snack": 4, "drinks": 6, "attraction": 6, "souvenir": 3}
 
 
 def compact_pool(pool):
-    """Rut gon danh sach dia diem xuong con id/name/price/rating de gui cho AI (giam token)."""
     return [
         {"id": p["id"], "name": p["name"], "price": p["price"], "rating": p.get("rating")}
         for p in pool
@@ -561,12 +507,6 @@ def compact_pool(pool):
 
 
 def curate_pool_by_ids(pool, ids, tier, min_count=3):
-    """
-    Loc pool theo danh sach id AI da chon, gan lai tier = hang muc AI da quyet dinh.
-    Neu AI chon thieu/khong hop le (id la, khong du so luong), tu dong bo sung
-    them dia diem tu pool goc de dam bao thuat toan xep lich trinh luon co du
-    lua chon (khong bao gio crash vi thieu du lieu).
-    """
     ids = set(ids) if isinstance(ids, list) else set()
     by_id = {p["id"]: p for p in pool}
     chosen = [dict(by_id[i]) for i in ids if i in by_id]
@@ -586,7 +526,6 @@ def curate_pool_by_ids(pool, ids, tier, min_count=3):
 
 
 def normalize_allocation(pct):
-    """Dam bao % phan bo AI tra ve la so hop le va cong lai ~100%, neu khong thi dung mac dinh."""
     if not isinstance(pct, dict):
         return dict(DEFAULT_ALLOCATION_PCT)
     try:
@@ -600,11 +539,6 @@ def normalize_allocation(pct):
 
 
 def build_day_route_url(day_stop, hotel_address=None):
-    """
-    Ghep dia chi cua khach san + cac diem den chinh (pick dau tien) trong ngay
-    thanh 1 link Google Maps chi duong nhieu chang, giup nguoi dung xem truoc
-    khoang cach / vi tri giua cac diem sang - trua - chieu - toi.
-    """
     addresses = []
     if hotel_address:
         addresses.append(hotel_address)
@@ -614,7 +548,6 @@ def build_day_route_url(day_stop, hotel_address=None):
             if picks and picks[0].get("address"):
                 addresses.append(picks[0]["address"])
 
-    # Bo cac dia chi trung lap lien tiep (vd hotel trung voi diem dau)
     dedup = []
     for a in addresses:
         if not dedup or dedup[-1] != a:
@@ -640,7 +573,6 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
     souvenir_picks = pick_souvenirs(places["souvenir"], tier, 3)
     souvenir_cost = avg_price(souvenir_picks) * people
 
-    # "Bo nho" xuyen suot chuyen di de han che lap lai dia diem giua cac ngay
     used_food, used_drinks, used_attraction, used_snack = set(), set(), set(), set()
     used_snack_types = set()
 
@@ -649,7 +581,6 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
     food_total = drinks_total = attraction_total = 0
 
     for d in range(days):
-        # --- 3 bua an trong ngay, moi bua 3 mon khac nhau, chon ngau nhien ---
         breakfast = pick_random(places["main_food"], tier, 3, used_food)
         used_food.update(p["name"] for p in breakfast)
         lunch = pick_random(places["main_food"], tier, 3, used_food)
@@ -657,10 +588,9 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
         dinner = pick_random(places["main_food"], tier, 3, used_food)
         used_food.update(p["name"] for p in dinner)
 
-        # --- Tham quan CHI xep vao ban ngay (sang/trua), khong xep buoi toi vi da so dong cua ---
         daytime_slots = ["morning", "midday"]
         random.shuffle(daytime_slots)
-        num_attraction_slots = random.choice([1, 1, 1, 2])  # da so 1 diem/ngay, thinh thoang 2
+        num_attraction_slots = random.choice([1, 1, 1, 2])
         attraction_slots = set(daytime_slots[:num_attraction_slots])
 
         morning_attraction, midday_attraction = [], []
@@ -671,7 +601,6 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
             midday_attraction = pick_random(places["attraction"], tier, 3, used_attraction)
             used_attraction.update(p["name"] for p in midday_attraction)
 
-        # --- Ca phe chieu (thoi quen o Da Lat) + quan nuoc & an vat buoi toi (kieu cho dem) ---
         afternoon_drinks = pick_random(places["drinks"], tier, 3, used_drinks)
         used_drinks.update(p["name"] for p in afternoon_drinks)
         evening_drinks = pick_random(places["drinks"], tier, 3, used_drinks)
@@ -690,8 +619,6 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
 
         all_attraction_names += [p["name"] for p in morning_attraction + midday_attraction]
 
-        # Cau truc linh hoat: moi khung gio la 1 danh sach cac "khoi hoat dong"
-        # (khong con co dinh sang=tham quan / trua=quan nuoc / toi=tham quan nua)
         morning_blocks = [{"label": "🍜 Ăn sáng", "picks": breakfast, "category": "food"}]
         if morning_attraction:
             morning_blocks.append({"label": "🌲 Tham quan", "picks": morning_attraction, "category": "attraction"})
@@ -751,14 +678,11 @@ def build_plan(places, transport_items, tier, people, days, nights, rooms, trans
     }
 
 
-# ---------------------------------------------------------------------------
-# Routes
-# ---------------------------------------------------------------------------
-
 @app.route("/", methods=["GET"])
 def index():
     transport_items = build_transport()
     return render_template("index.html", transport_items=transport_items, stay_types=STAY_TYPES)
+
 
 @app.route("/result", methods=["POST"])
 def result():
@@ -767,7 +691,6 @@ def result():
     transport_key = request.form.get("transport", "xe_may")
     contingency_per_person = max(parse_money(request.form.get("contingency", 0)), 0)
 
-    # --- Ngay di / ngay ve -> tinh so ngay + xac dinh mua ---
     today = date.today()
     try:
         start_date = datetime.strptime(request.form.get("start_date", ""), "%Y-%m-%d").date()
@@ -795,16 +718,12 @@ def result():
     if not places["hotel"]:
         places = load_all_places()
 
-    # Uoc tinh truoc chi phi di chuyen + du phong
-    # de biet AI con bao nhieu "ngan sach linh hoat" de phan bo cho khach san/an uong/...
     pre_transport_cost, pre_transport_item, _ = transport_cost_for(
         transport_items, transport_key, people, days
     )
     contingency_cost = contingency_per_person * people
     flexible_budget = max(budget - pre_transport_cost - contingency_cost, 0)
 
-    # Tinh san tong tien cho TAT CA lua chon phuong tien, de nguoi dung tu chon
-    # o trang ket qua (thay vi chon truoc o trang bia) - dung cho JS tinh lai tong.
     transport_options = []
     for t in transport_items:
         opt_cost, _, opt_qty = transport_cost_for(transport_items, t["key"], people, days)
@@ -815,8 +734,6 @@ def result():
             "is_default": t["key"] == transport_key,
         })
 
-    # --- Goi AI (Google Gemini - mien phi) de AI THAT SU quyet dinh: hang muc,
-    #     % phan bo ngan sach, va chon dia diem cu the tu du lieu that ---
     ai_result = generate_ai_plan({
         "days": days,
         "people": people,
@@ -863,8 +780,6 @@ def result():
             "season_name": season["name"], "season_note": season["note"],
         })
     else:
-        # --- AI khong kha dung (chua co key / het quota / loi mang) ---
-        # -> dung lai thuat toan dua tren luat (rule-based) nhu ban goc, app KHONG bao gio crash.
         budget_per_person_per_day = budget / (people * days) if people * days else 0
         start_tier = pick_tier_by_budget(budget_per_person_per_day)
         start_idx = TIERS.index(start_tier)
@@ -904,8 +819,8 @@ def result():
 @app.route("/browse", methods=["GET"])
 def browse():
     places = load_all_places()
-    places.pop("main_food", None)  # danh sach noi bo dung cho thuat toan, khong hien thi rieng
-    places.pop("snack", None)      # da gop vao "food" o tren, khong can hien thi rieng
+    places.pop("main_food", None)
+    places.pop("snack", None)
     return render_template(
         "browse.html",
         places=places,
