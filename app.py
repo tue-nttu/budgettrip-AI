@@ -696,35 +696,48 @@ def index():
     return render_template("index.html", transport_items=transport_items, stay_types=STAY_TYPES)
 
 
-@app.route("/result", methods=["POST"])
+@app.route("/result", methods=["GET", "POST"])
 def result():
-    people = max(int(request.form.get("people", 1)), 1)
-    budget = max(parse_money(request.form.get("budget", 0)), 0)
-    transport_key = request.form.get("transport", "xe_may")
-    contingency_per_person = max(parse_money(request.form.get("contingency", 0)), 0)
+    if request.method == "GET":
+        # Nếu người dùng bấm vào đường link chia sẻ (phương thức GET), 
+        # ta thiết lập mặc định các giá trị cơ bản (ví dụ: 2 người, 3 ngày, ngân sách 3 triệu)
+        people = 2
+        budget = 3_000_000
+        transport_key = "xe_may"
+        contingency_per_person = 0
+        start_date = date.today()
+        days = 3
+        nights = 2
+        rooms = 1
+        end_date = start_date + timedelta(days=days - 1)
+    else:
+        # Nếu người dùng bấm từ form lập kế hoạch lên (phương thức POST)
+        people = max(int(request.form.get("people", 1)), 1)
+        budget = max(parse_money(request.form.get("budget", 0)), 0)
+        transport_key = request.form.get("transport", "xe_may")
+        contingency_per_person = max(parse_money(request.form.get("contingency", 0)), 0)
 
-    today = date.today()
-    try:
-        start_date = datetime.strptime(request.form.get("start_date", ""), "%Y-%m-%d").date()
-    except ValueError:
-        start_date = today
-    try:
-        end_date = datetime.strptime(request.form.get("end_date", ""), "%Y-%m-%d").date()
-    except ValueError:
-        end_date = start_date + timedelta(days=2)
-    if end_date < start_date:
-        start_date, end_date = end_date, start_date
+        today = date.today()
+        try:
+            start_date = datetime.strptime(request.form.get("start_date", ""), "%Y-%m-%d").date()
+        except ValueError:
+            start_date = today
+        try:
+            end_date = datetime.strptime(request.form.get("end_date", ""), "%Y-%m-%d").date()
+        except ValueError:
+            end_date = start_date + timedelta(days=2)
+        if end_date < start_date:
+            start_date, end_date = end_date, start_date
 
-    days = max((end_date - start_date).days + 1, 1)
+        days = max((end_date - start_date).days + 1, 1)
+        nights = max(days - 1, 0)
+        rooms = math.ceil(people / 2)
+
     season = season_info(start_date.month)
-
-    nights = max(days - 1, 0)
-    rooms = math.ceil(people / 2)
-
     places = load_all_places()
     transport_items = build_transport()
 
-    selected_stay_type = request.form.get("stay_type", "")
+    selected_stay_type = request.form.get("stay_type", "") if request.method == "POST" else ""
     if selected_stay_type in STAY_TYPES:
         places["hotel"] = [h for h in places["hotel"] if h.get("stay_type") == selected_stay_type]
     if not places["hotel"]:
@@ -826,7 +839,6 @@ def result():
         plan=plan, remaining=remaining, over_budget=over_budget, ai_advice=ai_advice,
         ai_driven=ai_driven, allocation_pct=allocation_pct, transport_options=transport_options,
     )
-
 
 @app.route("/browse", methods=["GET"])
 def browse():
