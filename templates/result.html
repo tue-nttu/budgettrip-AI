@@ -404,7 +404,23 @@
 
     function downloadPDF() {
         closeShareModal();
-        window.print();
+        
+        // Lấy nội dung toàn bộ phần lịch trình trong container
+        var element = document.querySelector('.container');
+        
+        var opt = {
+          margin:       10,
+          filename:     'Lich-trinh-du-lich-Da-Lat.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        // Hiển thị thông báo đang tạo file cho người dùng đỡ sốt ruột
+        alert("Đang tạo file PDF, vui lòng đợi trong giây lát...");
+
+        // Tiến hành tạo và tải file về điện thoại/máy tính
+        html2pdf().from(element).set(opt).save();
     }
   </script>
 </body>
