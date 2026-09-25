@@ -254,7 +254,6 @@
     <div class="footer-actions" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
       <a href="{{ url_for('index') }}" class="btn-secondary">← Thử ngân sách khác</a>
       <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình khác</a>
-      <!-- Nút Chia sẻ kiểu ô vuông nằm cạnh -->
       <button onclick="openShareModal()" class="btn-secondary" style="cursor: pointer; background: #fff;">📤 Chia sẻ lịch trình</button>
     </div>
   </div>
@@ -264,30 +263,25 @@
     <div class="share-modal-content">
       <span class="share-close" onclick="closeShareModal()">&times;</span>
       <h3 style="font-family: 'Fraunces', serif; color: var(--pine-900); margin-bottom: 6px;">Chia sẻ lịch trình</h3>
-      <p style="font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 15px;">Chọn hình thức bạn muốn chia sẻ với bạn bè:</p>
+      <p style="font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 15px;">Chọn phương thức chia sẻ nhanh:</p>
       
       <div class="share-btn-grid">
-          <!-- Zalo -->
-          <a id="share-zalo" href="#" target="_blank" class="share-option-btn" style="background: #0068ff;">
+          <button onclick="shareToSocial('zalo')" class="share-option-btn" style="background: #0068ff;">
               💬 Zalo
-          </a>
-          <!-- Facebook -->
-          <a id="share-fb" href="#" target="_blank" class="share-option-btn" style="background: #1877f2;">
+          </button>
+          <button onclick="shareToSocial('facebook')" class="share-option-btn" style="background: #1877f2;">
               📘 Facebook
-          </a>
-          <!-- Messenger -->
-          <a id="share-messenger" href="#" target="_blank" class="share-option-btn" style="background: #0084ff;">
+          </button>
+          <button onclick="shareToSocial('messenger')" class="share-option-btn" style="background: #0084ff;">
               💌 Messenger
-          </a>
-          <!-- Sao chép link -->
+          </button>
           <button onclick="copyLink()" class="share-option-btn" style="background: var(--pine-700);">
               🔗 Sao chép link
           </button>
       </div>
 
-      <!-- Nút In file PDF -->
-      <button onclick="printToPDF()" class="share-option-btn" style="background: #e8a33d; width: 100%; margin-top: 12px; justify-content: center;">
-          🖨️ Lưu hoặc In file PDF
+      <button onclick="downloadPDF()" class="share-option-btn" style="background: #e8a33d; width: 100%; margin-top: 12px; justify-content: center;">
+          📥 Tải xuống file PDF
       </button>
     </div>
   </div>
@@ -350,29 +344,14 @@
       recalc();
     })();
 
-    // Xử lý bật/tắt bảng chọn Chia sẻ (Modal)
     function openShareModal() {
         document.getElementById('shareModal').style.display = 'flex';
-        
-        // Gắn link động khi mở modal
-        var currentUrl = encodeURIComponent(window.location.href);
-        var shareTitle = encodeURIComponent("Lịch trình du lịch Đà Lạt tuyệt vời của mình!");
-
-        var fbBtn = document.getElementById('share-fb');
-        if(fbBtn) fbBtn.href = "https://www.facebook.com/sharer/sharer.php?u=" + currentUrl;
-
-        var zaloBtn = document.getElementById('share-zalo');
-        if(zaloBtn) zaloBtn.href = "https://share.zalo.me/?url=" + currentUrl + "&title=" + shareTitle;
-
-        var msgBtn = document.getElementById('share-messenger');
-        if(msgBtn) msgBtn.href = "https://www.facebook.com/dialog/send?link=" + currentUrl + "&app_id=291494419107518&redirect_uri=" + currentUrl;
     }
 
     function closeShareModal() {
         document.getElementById('shareModal').style.display = 'none';
     }
 
-    // Đóng modal khi bấm ra ngoài vùng nội dung trắng
     window.onclick = function(event) {
         var modal = document.getElementById('shareModal');
         if (event.target == modal) {
@@ -380,18 +359,36 @@
         }
     }
 
-    // Hàm sao chép liên kết
     function copyLink() {
         navigator.clipboard.writeText(window.location.href).then(function() {
-            alert("Đã sao chép đường dẫn lịch trình! Bạn có thể dán vào bất cứ đâu để gửi cho bạn bè.");
+            alert("Đã sao chép đường dẫn lịch trình vào bộ nhớ tạm! Bạn có thể dán vào Zalo, Messenger để gửi cho bạn bè.");
             closeShareModal();
         }, function(err) {
             alert("Không thể sao chép liên kết.");
         });
     }
 
-    // Hàm In ra file PDF
-    function printToPDF() {
+    function shareToSocial(platform) {
+        var url = window.location.href;
+        var text = "Cùng xem lịch trình du lịch Đà Lạt tuyệt vời của mình nhé: " + url;
+        
+        if (platform === 'zalo') {
+            navigator.clipboard.writeText(text).then(function() {
+                alert("Đã sao chép nội dung kèm link! Mở Zalo và dán vào khung chat với bạn bè nhé.");
+                window.open("https://chat.zalo.me", "_blank");
+            });
+        } else if (platform === 'facebook') {
+            window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank");
+        } else if (platform === 'messenger') {
+            navigator.clipboard.writeText(url).then(function() {
+                alert("Đã sao chép link lịch trình! Hãy dán vào khung chat Messenger để gửi.");
+                window.open("https://www.messenger.com", "_blank");
+            });
+        }
+        closeShareModal();
+    }
+
+    function downloadPDF() {
         closeShareModal();
         window.print();
     }
