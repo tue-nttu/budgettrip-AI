@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lịch trình đã lưu – BudgetTrip AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <nav class="navbar" style="background: var(--pine-700);">
+    <div class="brand">Budget<span class="dot">Trip</span> AI</div>
+    <a href="{{ url_for('index') }}" style="color:#fff; text-decoration:none; font-size:1rem;">← Trang chủ</a>
+  </nav>
+
+  <div class="container" style="padding-top: 40px; min-height: 60vh;">
+    <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--pine-900);">⭐ Lịch trình đã lưu của bạn</h1>
+    <p style="color: var(--ink-soft); margin-bottom: 30px;">Danh sách các chuyến đi Đà Lạt bạn đã lưu lại để tham khảo.</p>
+
+    <!-- Khu vực hiển thị danh sách -->
+    <div id="saved-trips-list" style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Javascript sẽ tự động điền danh sách vào đây -->
+    </div>
+
+    <!-- Trạng thái khi chưa có gì -->
+    <div id="empty-state" style="display: none; text-align: center; padding: 50px 0;">
+      <p style="font-size: 3rem; margin-bottom: 10px;">📭</p>
+      <h3 style="color: var(--pine-900); margin-bottom: 6px;">Chưa có lịch trình nào được lưu</h3>
+      <p style="color: var(--ink-soft); font-size: 0.95rem; margin-bottom: 20px;">Hãy lập kế hoạch và nhấn nút "Lưu lịch trình này" để xem lại ở đây nhé!</p>
+      <a href="{{ url_for('index') }}" class="btn-primary" style="display: inline-block; width: auto; padding: 12px 24px;">Lập kế hoạch ngay</a>
+    </div>
+
+    <div style="margin-top: 40px;">
+      <a href="{{ url_for('index') }}" class="btn-secondary">← Quay về trang chủ</a>
+    </div>
+  </div>
+
+  <footer class="site-footer">BudgetTrip AI</footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var container = document.getElementById('saved-trips-list');
+        var emptyState = document.getElementById('empty-state');
+        
+        var savedTrips = JSON.parse(localStorage.getItem('my_saved_trips') || '[]');
+
+        if (savedTrips.length === 0) {
+            emptyState.style.display = 'block';
+        } else {
+            emptyState.style.display = 'none';
+            savedTrips.forEach(function(trip, index) {
+                var card = document.createElement('div');
+                card.style.cssText = "background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;";
+                
+                card.innerHTML = `
+                    <div>
+                        <span style="font-size: 0.75rem; font-weight: 600; color: var(--marigold-600); background: #fdf5e8; padding: 2px 8px; border-radius: 6px;">Đã lưu ngày: ${trip.createdAt}</span>
+                        <h3 style="font-size: 1.15rem; margin: 6px 0 4px; color: var(--pine-900);">${trip.title}</h3>
+                        <p style="font-size: 0.88rem; color: var(--ink-soft); margin: 0;">📅 Thời gian: ${trip.date} · 💰 Ngân sách: ${trip.budget}</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <a href="${trip.url}" class="btn-primary" style="padding: 10px 16px; font-size: 0.88rem; text-decoration: none;">Xem lại</a>
+                        <button onclick="deleteTrip('${trip.id}')" style="background: #fde8e8; color: #bc5a3c; border: none; padding: 10px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.88rem;">Xóa</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+    });
+
+    // Hàm xóa lịch trình đã lưu
+    function deleteTrip(id) {
+        if (confirm("Bạn có chắc muốn xóa lịch trình này khỏi danh sách đã lưu không?")) {
+            var savedTrips = JSON.parse(localStorage.getItem('my_saved_trips') || '[]');
+            savedTrips = savedTrips.filter(function(t) { return t.id !== id; });
+            localStorage.setItem('my_saved_trips', JSON.stringify(savedTrips));
+            location.reload(); // Tải lại trang để cập nhật danh sách
+        }
+    }
+  </script>
+</body>
+</html>
