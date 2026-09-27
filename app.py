@@ -30,14 +30,36 @@ def maps_link(address):
     return "https://www.google.com/maps/search/?api=1&query=" + quote(address)
 
 
+ADDRESS_URL_RE = re.compile(r"https?://\S+")
+
+
 @app.template_filter("urlize_address")
 def urlize_address(address):
-    """Bien dia chi text thanh the <a> bam duoc, mo Google Maps tim kiem dia chi do.
-    Dung o _macros.html (piped tiep voi |safe nen filter nay tra ve HTML dang chuoi)."""
+    """Bien dia chi text thanh the <a> bam duoc.
+
+    Du lieu trong CSV thuong co dang:
+        "39 Dong Tam, phuong 4 - cach trung tam 2 km https://maps.app.goo.gl/xxxx"
+    tuc la DA CO SAN 1 link Google Maps dung ngay trong chuoi dia chi.
+
+    - Neu tim thay link do: dung DUNG link nay lam href (tro thang toi dia
+      diem chinh xac tren Google Maps) va CHI hien phan chu dia chi (bo link)
+      len man hinh.
+    - Neu khong co link san (dia chi thuong, khong kem link): tu tao link
+      tim kiem Google Maps tu chinh dia chi do (nhu truoc gio).
+
+    Dung o _macros.html (piped tiep voi |safe nen filter nay tra ve HTML dang chuoi).
+    """
     if not address:
         return ""
-    url = maps_link(address)
-    safe_address = escape(address)
+    match = ADDRESS_URL_RE.search(address)
+    if match:
+        url = match.group(0)
+        clean_address = (address[: match.start()] + address[match.end():]).strip()
+        clean_address = clean_address.rstrip(" -,")
+    else:
+        url = maps_link(address)
+        clean_address = address
+    safe_address = escape(clean_address)
     return f'<a href="{url}" target="_blank" rel="noopener">📍 {safe_address}</a>'
 
 
