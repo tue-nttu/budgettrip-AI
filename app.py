@@ -9,22 +9,6 @@ import random
 import re
 from datetime import date, datetime, timedelta
 from urllib.parse import quote
-from markupsafe import Markup  # Đảm bảo đã import Markup ở đầu file app.py
-
-@app.template_filter("urlize_address")
-def urlize_address(text):
-    if not text:
-        return ""
-    url_match = re.search(r'(https?://[^\s]+)', text)
-    if url_match:
-        url = url_match.group(1)
-        address_only = text.replace(url, "").strip().rstrip(",")
-        # Dùng Markup để Flask hiểu đây là đoạn HTML an toàn và render ra thẻ thật
-        return Markup(f'<a href="{url}" target="_blank" style="color: #1f3a2e; text-decoration: underline; font-weight: 500;" title="Nhấn để mở Google Maps">📍 {address_only}</a>')
-    else:
-        return Markup(f"📍 {text}")
-
-
 from flask import Flask, render_template, request
 from ai_advisor import generate_ai_plan, fallback_advice
 
@@ -696,8 +680,6 @@ def index():
 @app.route("/result", methods=["GET", "POST"])
 def result():
     if request.method == "GET":
-        # Nếu người dùng bấm vào đường link chia sẻ (phương thức GET), 
-        # ta thiết lập mặc định các giá trị cơ bản (ví dụ: 2 người, 3 ngày, ngân sách 3 triệu)
         people = 2
         budget = 3_000_000
         transport_key = "xe_may"
@@ -708,7 +690,6 @@ def result():
         rooms = 1
         end_date = start_date + timedelta(days=days - 1)
     else:
-        # Nếu người dùng bấm từ form lập kế hoạch lên (phương thức POST)
         people = max(int(request.form.get("people", 1)), 1)
         budget = max(parse_money(request.form.get("budget", 0)), 0)
         transport_key = request.form.get("transport", "xe_may")
@@ -796,7 +777,6 @@ def result():
             ai_places, transport_items, tier, people, days, nights, rooms,
             transport_key, contingency_per_person
         )
-        over_budget = plan["total"] > budget
         ai_advice = ai_result.get("advice") or fallback_advice({
             "tier_label": plan["tier_label"], "attraction_names": plan["attraction_names"],
             "season_name": season["name"], "season_note": season["note"],
@@ -816,7 +796,6 @@ def result():
                 plan = candidate
                 break
 
-        over_budget = plan is None
         if plan is None:
             plan = build_plan(
                 places, transport_items, "binh_dan", people, days, nights, rooms,
@@ -833,7 +812,7 @@ def result():
         "result.html",
         people=people, days=days, nights=nights, rooms=rooms, budget=budget,
         start_date=start_date, end_date=end_date, season=season,
-        plan=plan, remaining=remaining, over_budget=over_budget, ai_advice=ai_advice,
+        plan=plan, remaining=remaining, over_budget=plan["total"] > budget, ai_advice=ai_advice,
         ai_driven=ai_driven, allocation_pct=allocation_pct, transport_options=transport_options,
     )
 
