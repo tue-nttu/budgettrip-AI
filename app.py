@@ -23,8 +23,9 @@ def urlize_address(text):
         return Markup(f'<a href="{url}" target="_blank" style="color: #1f3a2e; text-decoration: underline; font-weight: 500;" title="Nhấn để mở Google Maps">📍 {address_only}</a>')
     else:
         return Markup(f"📍 {text}")
-from flask import Flask, render_template, request
 
+
+from flask import Flask, render_template, request
 from ai_advisor import generate_ai_plan, fallback_advice
 
 app = Flask(__name__)
@@ -46,27 +47,6 @@ def maps_link(address):
 @app.route("/saved")
 def saved_trips():
     return render_template("saved.html")
-
-@app.template_filter("urlize_address")
-def urlize_address(text):
-    """Biến toàn bộ dòng địa chỉ thành link Google Maps, không hiện chữ Xem bản đồ."""
-    if not text:
-        return ""
-
-    # Dùng Regex tìm link trong đoạn text
-    url_match = re.search(r'(https?://[^\s]+)', text)
-    
-    if url_match:
-        url = url_match.group(1)
-        # Lấy phần văn bản đứng trước link làm địa chỉ hiển thị chính
-        address_only = text.replace(url, "").strip()
-        address_only = address_only.rstrip(",").strip()
-        
-        # Bọc toàn bộ vào thẻ a, khi rê chuột vào sẽ đổi màu nhẹ để người dùng biết là bấm được
-        return f'<a href="{url}" target="_blank" style="color: #1f3a2e; text-decoration: underline; font-weight: 500;" title="Nhấn để mở Google Maps">📍 {address_only}</a>'
-    else:
-        return f"📍 {text}"
-
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
