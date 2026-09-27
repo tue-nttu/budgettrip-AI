@@ -252,10 +252,12 @@
     <div class="footer-actions" style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-top: 30px;">
       <a href="{{ url_for('index') }}" class="btn-secondary">← Thử ngân sách khác</a>
       <a href="{{ url_for('browse') }}" class="btn-secondary">🔍 Tự chọn lịch trình khác</a>
-      <button onclick="openShareModal()" class="btn-secondary" style="cursor: pointer; background: #fff;">📤 Chia sẻ lịch trình</button>
-      <button onclick="saveCurrentTrip()" class="btn-primary" style="cursor: pointer; flex: 1; min-width: 160px; background: var(--marigold-500); color: var(--pine-900);">
-        ⭐ Lưu lịch trình này
+      
+      <button onclick="saveCurrentTrip()" class="btn-secondary" style="cursor: pointer; background: #fdf5e8; border-color: var(--marigold-500); color: var(--pine-900);">
+        ⭐ Lưu lịch trình
       </button>
+
+      <button onclick="openShareModal()" class="btn-secondary" style="cursor: pointer; background: #fff;">📤 Chia sẻ lịch trình</button>
     </div>
   </div>
 
@@ -387,7 +389,6 @@
         closeShareModal();
     }
 
-    // Hàm lưu lịch trình vào localStorage
     function saveCurrentTrip() {
         var tripData = {
             id: 'trip_' + Date.now(),
