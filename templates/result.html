@@ -227,8 +227,13 @@
           <p class="transport-suggest-item">
             <b>{{ p.name }}</b>{% if p.phone %} · ☎ {{ p.phone }}{% endif %}
             {% if p.address %}
-              {% set parts = p.address.split('https://') %}
-              <br><a href="https://{{ parts[1] }}" target="_blank" style="color: #1f3a2e; text-decoration: underline; font-weight: 500;" title="Nhấn để mở Google Maps">📍 {{ parts[0].replace('Địa chỉ :', '').replace('Địa chỉ:', '').strip().rstrip(',') }}</a>
+              <br>
+              {% if 'https://' in p.address %}
+                {% set parts = p.address.split('https://') %}
+                <a href="https://{{ parts[1] }}" target="_blank" style="color: #1f3a2e; text-decoration: underline; font-weight: 500;" title="Nhấn để mở Google Maps">📍 {{ parts[0].replace('Địa chỉ :', '').replace('Địa chỉ:', '').strip().rstrip(',') }}</a>
+              {% else %}
+                📍 {{ p.address }}
+              {% endif %}
             {% endif %}
           </p>
           {% endfor %}
