@@ -10,6 +10,7 @@ import re
 from datetime import date, datetime, timedelta
 from urllib.parse import quote
 from flask import Flask, render_template, request
+from markupsafe import escape
 from ai_advisor import generate_ai_plan, fallback_advice
 
 app = Flask(__name__)
@@ -27,6 +28,18 @@ def maps_link(address):
     if not address:
         return "#"
     return "https://www.google.com/maps/search/?api=1&query=" + quote(address)
+
+
+@app.template_filter("urlize_address")
+def urlize_address(address):
+    """Bien dia chi text thanh the <a> bam duoc, mo Google Maps tim kiem dia chi do.
+    Dung o _macros.html (piped tiep voi |safe nen filter nay tra ve HTML dang chuoi)."""
+    if not address:
+        return ""
+    url = maps_link(address)
+    safe_address = escape(address)
+    return f'<a href="{url}" target="_blank" rel="noopener">📍 {safe_address}</a>'
+
 
 @app.route("/saved")
 def saved_trips():
