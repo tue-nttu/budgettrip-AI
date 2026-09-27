@@ -29,13 +29,16 @@ def maps_link(address):
         return "#"
     return "https://www.google.com/maps/search/?api=1&query=" + quote(address)
 
+@app.route("/saved")
+def saved_trips():
+    return render_template("saved.html")
 
 @app.template_filter("urlize_address")
 def urlize_address(text):
     """Biến toàn bộ dòng địa chỉ thành link Google Maps, không hiện chữ Xem bản đồ."""
     if not text:
         return ""
-    
+
     # Dùng Regex tìm link trong đoạn text
     url_match = re.search(r'(https?://[^\s]+)', text)
     
