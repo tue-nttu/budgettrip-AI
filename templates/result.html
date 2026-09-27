@@ -226,7 +226,10 @@
           {% for p in plan.transport_item.providers_top3 %}
           <p class="transport-suggest-item">
             <b>{{ p.name }}</b>{% if p.phone %} · ☎ {{ p.phone }}{% endif %}
-            {% if p.address %}<br>{{ p.address | safe | urlize_address }}{% endif %}
+            {% if p.address %}
+              {% set parts = p.address.split('https://') %}
+              <br><a href="https://{{ parts[1] }}" target="_blank" style="color: #1f3a2e; text-decoration: underline; font-weight: 500;" title="Nhấn để mở Google Maps">📍 {{ parts[0].strip().rstrip(',') }}</a>
+            {% endif %}
           </p>
           {% endfor %}
         </div>
