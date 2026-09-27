@@ -333,13 +333,21 @@ def parse_providers(text, limit=3):
                 current["phone"] = m.group(1).strip() if m else ""
         elif low.startswith("địa chỉ"):
             if current:
-                current["address"] = line.split(":", 1)[-1].strip(" :")
+                raw_addr = line.split(":", 1)[-1].strip(" :")
+                # Tách riêng link Google Maps và tên địa chỉ ngay tại đây cho an toàn tuyệt đối
+                if "https://" in raw_addr:
+                    parts = raw_addr.split("https://")
+                    current["address_text"] = parts[0].replace("Địa chỉ :", "").replace("Địa chỉ:", "").strip().rstrip(",")
+                    current["address_url"] = "https://" + parts[1].strip()
+                else:
+                    current["address_text"] = raw_addr
+                    current["address_url"] = ""
         elif low.startswith("ngoài ra") or low.startswith("ngoai ra"):
             continue
         else:
             if current:
                 entries.append(current)
-            current = {"name": line.rstrip(":").strip(), "phone": "", "address": ""}
+            current = {"name": line.rstrip(":").strip(), "phone": "", "address_text": "", "address_url": ""}
     if current:
         entries.append(current)
     return entries[:limit] if limit else entries
