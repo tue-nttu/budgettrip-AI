@@ -226,13 +226,12 @@
           {% for p in plan.transport_item.providers_top3 %}
           <p class="transport-suggest-item">
             <b>{{ p.name }}</b>{% if p.phone %} · ☎ {{ p.phone }}{% endif %}
-            {% if p.address %}
+            {% if p.address_text %}
               <br>
-              {% if 'https://' in p.address %}
-                {% set parts = p.address.split('https://') %}
-                <a href="https://{{ parts[1] }}" target="_blank" style="color: #1f3a2e; text-decoration: underline; font-weight: 500;" title="Nhấn để mở Google Maps">📍 {{ parts[0].replace('Địa chỉ :', '').replace('Địa chỉ:', '').strip().rstrip(',') }}</a>
+              {% if p.address_url %}
+                <a href="{{ p.address_url }}" target="_blank" style="color: #1f3a2e; text-decoration: underline; font-weight: 500;" title="Nhấn để mở Google Maps">📍 {{ p.address_text }}</a>
               {% else %}
-                📍 {{ p.address }}
+                📍 {{ p.address_text }}
               {% endif %}
             {% endif %}
           </p>
