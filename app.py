@@ -9,6 +9,20 @@ import random
 import re
 from datetime import date, datetime, timedelta
 from urllib.parse import quote
+from markupsafe import Markup  # Đảm bảo đã import Markup ở đầu file app.py
+
+@app.template_filter("urlize_address")
+def urlize_address(text):
+    if not text:
+        return ""
+    url_match = re.search(r'(https?://[^\s]+)', text)
+    if url_match:
+        url = url_match.group(1)
+        address_only = text.replace(url, "").strip().rstrip(",")
+        # Dùng Markup để Flask hiểu đây là đoạn HTML an toàn và render ra thẻ thật
+        return Markup(f'<a href="{url}" target="_blank" style="color: #1f3a2e; text-decoration: underline; font-weight: 500;" title="Nhấn để mở Google Maps">📍 {address_only}</a>')
+    else:
+        return Markup(f"📍 {text}")
 from flask import Flask, render_template, request
 
 from ai_advisor import generate_ai_plan, fallback_advice
